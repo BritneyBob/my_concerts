@@ -1,6 +1,5 @@
-def main():
-    pass
-
-
-if __name__ == '__main__':
-    main()
+class Person:
+    def __init__(self, first_name, last_name, nickname=None):
+        self.first_name = first_name
+        self.last_name = last_name
+        self.nickname = nickname
