@@ -1,9 +1,12 @@
+import pickle
+
 from concert import Concert
 
 
 class Menu:
     def __init__(self):
         self.running = True
+        self.concerts = []
 
     def run(self):
         print("Welcome to My Concerts!")
@@ -42,6 +45,10 @@ class Menu:
 
     def search_artist(self):
         name = input("What is the name of the artist?: ")
+        with open('concerts.bin', 'rb') as concerts_file:
+            loaded_data = pickle.load(concerts_file)
+        # for concert in self.concerts:
+        loaded_data.print_concert()
 
     def search_arena(self):
         name = input("What is the name of the arena?: ")
@@ -53,10 +60,11 @@ class Menu:
         name = input("Did you go with someone to the concert? If yes, please enter one or more names: ")
 
     def add_concert(self):
-        concerts = []
         artist = input("What is the name of the artist?: ")
         arena = input("What is the name of the arena?: ")
         date = input("What date was the concert (yy/mm/dd)?: ")
         person = input("Did you go with someone to the concert? If yes, please enter one or more names: ")
         new_concert = Concert(artist, arena, date, person)
-        concerts.append(new_concert)
+        with open('concerts.bin', 'ab') as concerts_file:
+            pickle.dump(new_concert, concerts_file)
+        self.concerts.append(new_concert)
