@@ -3,15 +3,14 @@ from concert import Concert
 
 class Menu:
     def __init__(self):
-        self.concert = Concert()
         self.running = True
 
     def run(self):
+        print("Welcome to My Concerts!")
         while self.running:
             self.display_menu()
 
     def display_menu(self):
-        print("Welcome to My Concerts!")
         print("1. Search for a concert")
         print("2. Add a new concert")
         choice = input("What would you like to do (1-2)?: ")
@@ -54,8 +53,10 @@ class Menu:
         name = input("Did you go with someone to the concert? If yes, please enter one or more names: ")
 
     def add_concert(self):
+        concerts = []
         artist = input("What is the name of the artist?: ")
         arena = input("What is the name of the arena?: ")
-        date = input("What date was the concert?: ")
+        date = input("What date was the concert (yy/mm/dd)?: ")
         person = input("Did you go with someone to the concert? If yes, please enter one or more names: ")
         new_concert = Concert(artist, arena, date, person)
+        concerts.append(new_concert)

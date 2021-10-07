@@ -9,5 +9,8 @@ class Concert:
         self.name_artist = Artist(artist)
         self.name_arena = Arena(arena)
         self.date = Date(date)
-        self.person = None if person.lower() == 'no' else self.person = Person(person)
+        if person.lower() == 'no':
+            self.person = None
+        else:
+            self.person = Person(person)
 
