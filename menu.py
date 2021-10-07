@@ -33,22 +33,10 @@ class Menu:
         choice = int(input("What would you like to base your search on (1-4)?: "))
         match choice:
             case 1:
-                self.search_menu_artist()
+                self.concerts.search_artist()
             case 2:
-                self.search_menu_arena()
+                self.concerts.search_arena()
             case 3:
-                self.search_menu_date()
+                self.concerts.search_date()
             case 4:
-                self.search_menu_person()
-
-        def search_menu_artist(self):
-            pass
-
-        def search_menu_arena(self):
-            pass
-
-        def search_menu_date(self):
-            pass
-
-        def search_menu_person(self):
-            pass
+                self.concerts.search_person()
