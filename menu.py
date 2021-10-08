@@ -54,25 +54,66 @@ class Menu:
                 self.search_date()
             case 4:
                 self.search_person()
+            case _: print("Please enter a digit 1-4")
+
+    # def search(self, search_string):
+    #     found_concerts = []
+    #     for concert in self.concerts_list:
+    #         if search_string == concert.artist.name:
+    #             found_concerts.append(concert)
+    #     if len(found_concerts) > 0:
+    #         for concert in found_concerts:
+    #             concert.print_concert()
+    #     else:
+    #         print(f"There is no concert saved with the artist {search_string}. Maybe you should add it?")
 
     def search_artist(self):
-        print(len(self.concerts_list))
-        name = input("What is the name of the artist?: ")
+        artist = input("What is the name of the artist?: ")
+        found_concerts = []
         for concert in self.concerts_list:
-            concert.print_concert()
-        # self.concerts_list.print_concert()
+            if artist == concert.artist.name:
+                found_concerts.append(concert)
+        if len(found_concerts) > 0:
+            for concert in found_concerts:
+                concert.print_concert()
+        else:
+            print(f"There is no concert saved with the artist {artist}. Maybe you should add it?")
 
     def search_arena(self):
-        name = input("What is the name of the arena?: ")
-        self.get_saved_concerts().print_concert()
+        arena = input("What is the name of the arena?: ")
+        found_concerts = []
+        for concert in self.concerts_list:
+            if arena == concert.arena.name:
+                found_concerts.append(concert)
+        if len(found_concerts) > 0:
+            for concert in found_concerts:
+                concert.print_concert()
+        else:
+            print(f"There is no concert saved at the arena {arena}. Maybe you should add one?")
 
     def search_date(self):
         date = input("What date would you like to search for?: ")
-        self.get_saved_concerts().print_concert()
+        found_concerts = []
+        for concert in self.concerts_list:
+            if date == concert.date.date:
+                found_concerts.append(concert)
+        if len(found_concerts) > 0:
+            for concert in found_concerts:
+                concert.print_concert()
+        else:
+            print(f"There is no concert saved on the date {date}. Maybe you should add one?")
 
     def search_person(self):
-        name = input("Enter the name of the person you went to the concert with: ")
-        self.get_saved_concerts().print_concert()
+        person = input("Enter the name of the person you went to the concert with: ")
+        found_concerts = []
+        for concert in self.concerts_list:
+            if person == concert.person.first_name:
+                found_concerts.append(concert)
+        if len(found_concerts) > 0:
+            for concert in found_concerts:
+                concert.print_concert()
+        else:
+            print(f"There is no concert saved where you went with someone called {person}. Maybe you should add one?")
 
     def add_concert(self):
         artist = input("What is the name of the artist?: ")
