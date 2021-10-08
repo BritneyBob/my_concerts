@@ -1,17 +1,29 @@
 import pickle
-
+from os.path import exists
 from concert import Concert
 
 
 class Menu:
     def __init__(self):
         self.running = True
-        self.concerts = []
+        if exists('concerts.bin'):
+            self.concerts_list = self.get_saved_concerts()
+        else:
+            self.concerts_list = []
 
     def run(self):
         print("Welcome to My Concerts!")
         while self.running:
             self.display_menu()
+
+    #@staticmethod
+    def get_saved_concerts(self):
+        try:
+            with open('concerts.bin', 'rb') as concerts_file:
+                x = pickle.load(concerts_file)
+                return x
+        except EOFError:
+            return []
 
     def display_menu(self):
         print("1. Search for a concert")
@@ -44,20 +56,23 @@ class Menu:
                 self.search_person()
 
     def search_artist(self):
+        print(len(self.concerts_list))
         name = input("What is the name of the artist?: ")
-        with open('concerts.bin', 'rb') as concerts_file:
-            loaded_data = pickle.load(concerts_file)
-        # for concert in self.concerts:
-        loaded_data.print_concert()
+        for concert in self.concerts_list:
+            concert.print_concert()
+        # self.concerts_list.print_concert()
 
     def search_arena(self):
         name = input("What is the name of the arena?: ")
+        self.get_saved_concerts().print_concert()
 
     def search_date(self):
         date = input("What date would you like to search for?: ")
+        self.get_saved_concerts().print_concert()
 
     def search_person(self):
-        name = input("Did you go with someone to the concert? If yes, please enter one or more names: ")
+        name = input("Enter the name of the person you went to the concert with: ")
+        self.get_saved_concerts().print_concert()
 
     def add_concert(self):
         artist = input("What is the name of the artist?: ")
@@ -65,6 +80,6 @@ class Menu:
         date = input("What date was the concert (yy/mm/dd)?: ")
         person = input("Did you go with someone to the concert? If yes, please enter one or more names: ")
         new_concert = Concert(artist, arena, date, person)
-        with open('concerts.bin', 'ab') as concerts_file:
-            pickle.dump(new_concert, concerts_file)
-        self.concerts.append(new_concert)
+        self.concerts_list.append(new_concert)
+        with open('concerts.bin', 'wb') as concerts_file:
+            pickle.dump(self.concerts_list, concerts_file)
