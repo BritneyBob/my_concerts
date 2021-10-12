@@ -109,7 +109,7 @@ class Menu:
         color_print('green', f"2. Venue")
         color_print('magenta', f"3. Date")
         color_print('green', f"4. Person")
-        choice = int(input("What would you like search for (1-4)?: "))
+        choice = int(input("What would you like to search for (1-4)?: "))
         print()
         match choice:
             case 1:
@@ -141,8 +141,14 @@ class Menu:
             if artist == concert.artist.name:
                 found_concerts.append(concert)
         if len(found_concerts) > 0:
-            for concert in sorted(self.found_concerts, key=lambda c: c.date.date):
+            for concert in sorted(found_concerts, key=lambda c: c.date.date):
                 concert.print_concert()
+            remove_change = input("Would you like to change facts about a concert or remove a concert (enter 'change', "
+                                  "'remove' or 'no')? ")
+            if remove_change == 'change':
+                self.change(found_concerts)
+            elif remove_change == 'remove':
+                self.remove(found_concerts)
         else:
             color_print('red', f"Unfortunately you have no recollection of a concert with the artist {artist}.")
             color_print('red', f"If you have gotten a new memory you can add it by choosing 1 in the main menu.")
@@ -154,8 +160,14 @@ class Menu:
             if venue == concert.venue.name.lower():
                 found_concerts.append(concert)
         if len(found_concerts) > 0:
-            for concert in sorted(self.found_concerts, key=lambda c: c.date.date):
+            for concert in sorted(found_concerts, key=lambda c: c.date.date):
                 concert.print_concert()
+            remove_change = input("Would you like to change facts about a concert or remove a concert (enter 'change', "
+                                  "'remove' or 'no')? ")
+            if remove_change == 'change':
+                self.change(found_concerts)
+            elif remove_change == 'remove':
+                self.remove(found_concerts)
         else:
             color_print('red', f"Unfortunately you have no recollection of a concert at the venue {venue}.")
             color_print('red', f"If you have gotten a new memory you can add it by choosing 1 in the main menu.")
@@ -167,10 +179,10 @@ class Menu:
             if date == concert.date.date:
                 found_concerts.append(concert)
         if len(found_concerts) > 0:
-            for concert in sorted(self.found_concerts, key=lambda c: c.date.date):
+            for concert in sorted(found_concerts, key=lambda c: c.date.date):
                 concert.print_concert()
             remove_change = input("Would you like to change facts about a concert or remove a concert (enter 'change', "
-                                  "'remove' or 'no'")
+                                  "'remove' or 'no')? ")
             if remove_change == 'change':
                 self.change(found_concerts)
             elif remove_change == 'remove':
@@ -187,8 +199,14 @@ class Menu:
                 if person == saved_person.first_name:
                     found_concerts.append(concert)
         if len(found_concerts) > 0:
-            for concert in sorted(self.found_concerts, key=lambda c: c.date.date):
+            for concert in sorted(found_concerts, key=lambda c: c.date.date):
                 concert.print_concert()
+            remove_change = input("Would you like to change facts about a concert or remove a concert (enter 'change', "
+                                  "'remove' or 'no')? ")
+            if remove_change == 'change':
+                self.change(found_concerts)
+            elif remove_change == 'remove':
+                self.remove(found_concerts)
         else:
             color_print('red', f"Unfortunately you have no recollection of a concert that you went to with someone "
                                f"called {person}.")
@@ -214,65 +232,69 @@ class Menu:
         if is_note.lower() == 'yes':
             note = input("Please enter your notes about the concert: ")
         elif is_note.lower() == 'no':
-            note = None
+            note = ''
 
         new_concert = Concert(artist, venue, date, persons, note)
         self.concerts_list.append(new_concert)
         with open('concerts.bin', 'wb') as concerts_file:
             pickle.dump(self.concerts_list, concerts_file)
 
-        def change(concerts):
-            if len(concerts) > 1:
-                for i, concert in enumerate(concerts):
-                    print(f"{i}.", end=' ')
-                    concert.print_concert()
-                    concert_choice = input(f"Which of the concerts would you like to change facts about "
-                                           f"(1-{len(concerts)})?: ")
-            else:
-                concert = concerts[0]
+    def change(self, concerts):
+        if len(concerts) > 1:
+            for i, concert in enumerate(concerts):
+                print(f"{i+1}.", end=' ')
+                concert.print_concert()
+                concert_choice = int(input(f"Which of the concerts would you like to change facts about "
+                                           f"(1-{len(concerts)})?: "))
+            concert = concerts[concert_choice-1]
+        else:
+            concert = concerts[0]
 
-            color_print('magenta', f"1. Artist")
-            color_print('green', f"2. Venue")
-            color_print('magenta', f"3. Date")
-            color_print('green', f"4. Person")
-            color_print('magenta', f"5. Note")
-            fact_to_change = int(input("Which fact would you like to change? (1-4): "))
-            match fact_to_change:
-                case 1:
-                    changed_artist = input("Please enter the altered name of the artist: ")
-                    changed_concert = Concert(changed_artist, concert.venue.name, concert.date.date, concert.persons,
-                                              concert.note.note)  # Måste fixa tillgången till persons!
-                case 2:
-                    changed_venue = input("Please enter the altered name of the venue: ")
-                    changed_concert = Concert(concert.artist.name, changed_venue, concert.date.date, concert.persons,
-                                              concert.note.note)
-                case 3:
-                    changed_date = input("Please enter the altered date: ")
-                    changed_concert = Concert(concert.artist.name, concert.venue.name, changed_date, concert.persons,
-                                              concert.note.note)
-                case 4:
-                    changed_persons = input("Please enter the altered name/s of the person/s: ")
-                    changed_concert = Concert(concert.artist.name, concert.venue.name, concert.date.date,
-                                              changed_persons, concert.note.note)
-                case 4:
-                    changed_note = input("Please enter the new note: ")
-                    changed_concert = Concert(concert.artist.name, concert.venue.name, concert.date.date,
-                                              concert.persons, changed_note)
+        color_print('magenta', f"1. Artist")
+        color_print('green', f"2. Venue")
+        color_print('magenta', f"3. Date")
+        color_print('green', f"4. Person")
+        color_print('magenta', f"5. Note")
+        fact_to_change = int(input("Which fact would you like to change? (1-5): "))
+        persons_list = []
+        for person in concert.persons:
+            persons_list.append(person.first_name)
+        match fact_to_change:
+            case 1:
+                changed_artist = input("Please enter the altered name of the artist: ")
+                changed_concert = Concert(changed_artist, concert.venue.name, concert.date.date, persons_list,
+                                          concert.note.note)
+            case 2:
+                changed_venue = input("Please enter the altered name of the venue: ")
+                changed_concert = Concert(concert.artist.name, changed_venue, concert.date.date, persons_list,
+                                          concert.note.note)
+            case 3:
+                changed_date = input("Please enter the altered date: ")
+                changed_concert = Concert(concert.artist.name, concert.venue.name, changed_date, persons_list,
+                                          concert.note.note)
+            case 4:
+                changed_persons = input("Please enter the altered name/s of the person/s: ").split()
+                changed_concert = Concert(concert.artist.name, concert.venue.name, concert.date.date,
+                                          changed_persons, concert.note.note)
+            case 5:
+                changed_note = input("Please enter the new note: ")
+                changed_concert = Concert(concert.artist.name, concert.venue.name, concert.date.date,
+                                          persons_list, changed_note)
 
-            self.concerts_list.append(changed_concert)
-            self.concerts_list.remove(concert)
-            color_print('cyan', f"The concerted was altered with the new facts: ")
-            changed_concert.print_concert()
+        self.concerts_list.append(changed_concert)
+        self.concerts_list.remove(concert)
+        color_print('cyan', f"The concerted was altered with the new facts: ")
+        changed_concert.print_concert()
 
-        def remove(concerts):
-            if len(concerts) > 1:
-                for i, concert in enumerate(concerts):
-                    print(f"{i}.", end=' ')
-                    concert.print_concert()
-                    concert_choice = input(f"Which of the concerts would you like to remove (1-{len(concerts)})?: ")
-            else:
-                concert = concerts[0]
+    def remove(self, concerts):
+        if len(concerts) > 1:
+            for i, concert in enumerate(concerts):
+                print(f"{i+1}.", end=' ')
+                concert.print_concert()
+                concert_choice = int(input(f"Which of the concerts would you like to remove (1-{len(concerts)})?: "))
+            concert = concerts(concert_choice-1)
+        else:
+            concert = concerts[0]
 
-            self.concerts_list.remove(concert)
-            color_print('cyan', f"The chosen concert was removed")
-
+        self.concerts_list.remove(concert)
+        color_print('cyan', f"The chosen concert was removed")

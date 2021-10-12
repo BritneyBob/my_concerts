@@ -23,8 +23,7 @@ class Concert:
             for person in persons:
                 self.persons.append(Person(person))
 
-        if note is not None:
-            self.note = Note(note)
+        self.note = Note(note)
 
     def print_concert(self):
         color_print('blue', f"* {self.date.date} you saw {self.artist.name} at {self.venue.name} in {self.venue.city}, "
@@ -42,7 +41,7 @@ class Concert:
                 else:
                     color_print('blue', f"{person.first_name}, ", end='')
 
-        if self.note:
+        if len(self.note.note) > 0:
             if len(self.note.note) > 165:
                 color_print('cyan', f"\n  Notes: {self.note.note[:165]}")
                 color_print('cyan', f"  {self.note.note[165:]}")
