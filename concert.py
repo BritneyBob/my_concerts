@@ -9,12 +9,20 @@ from terminal_color import color_print
 class Concert:
     def __init__(self, artist, venue, date, persons, note):
         self.artist = Artist(artist)
-        self.venue = Venue(venue)
+
+        if isinstance(venue, str):
+            self.venue = Venue(venue)
+        elif isinstance(venue, tuple):
+            venue_name, city, country = venue
+            self.venue = Venue(venue_name, city, country)
+
         self.date = Date(date)
+
         self.persons = []
         if persons[0].lower() != 'no':
             for person in persons:
                 self.persons.append(Person(person))
+
         if note is not None:
             self.note = Note(note)
 
@@ -23,7 +31,7 @@ class Concert:
                             f"{self.venue.country}.")
 
         if len(self.persons) > 0:
-            color_print('blue', f"  You were there together with ", end='')
+            color_print('blue', f"  You were there with ", end='')
             for i, person in enumerate(self.persons):
                 if len(self.persons) == 1:
                     color_print('blue', f'{person.first_name}.', end='')
@@ -35,9 +43,9 @@ class Concert:
                     color_print('blue', f"{person.first_name}, ", end='')
 
         if self.note:
-            if len(self.note.note) > 180:
-                color_print('blue', f"\nNotes: {self.note.note[:180]}")
-                color_print('blue', f"  {self.note.note[180:]}")
+            if len(self.note.note) > 165:
+                color_print('cyan', f"\n  Notes: {self.note.note[:165]}")
+                color_print('cyan', f"  {self.note.note[165:]}")
             else:
-                color_print('blue', f"\n  Notes: {self.note.note}")
+                color_print('cyan', f"\n  Notes: {self.note.note}")
         print()
