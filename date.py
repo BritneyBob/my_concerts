@@ -1,15 +1,11 @@
 class Date:
     def __init__(self, date):
         self.date = date
-        # self.year = None
-        # self.month = None
-        # self.day = None
-
-    def get_year(self):
-        return self.date.split('/')[0]
+        split_date = self.date.split('/')
+        self.year = split_date[0]
+        self.month = split_date[1]
+        self.day = split_date[2]
 
     def get_month(self):
-        return self.date.split('/')[1]
+        return self.month
 
-    def get_day(self):
-        return self.date.split('/')[0]
