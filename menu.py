@@ -1,6 +1,8 @@
 import pickle
 import random
+from fuzzywuzzy import fuzz
 from datetime import datetime
+from dateparser import parse
 from os.path import exists
 from concert import Concert
 from terminal_color import color_print
@@ -24,8 +26,8 @@ class Menu:
     def get_saved_concerts(self):
         try:
             with open('concerts.bin', 'rb') as concerts_file:
-                x = pickle.load(concerts_file)
-                return x
+                saved_concerts = pickle.load(concerts_file)
+                return saved_concerts
         except EOFError:
             return []
 
@@ -44,6 +46,8 @@ class Menu:
         years = datetime.now().year - concert_to_remind_of.date.year
         if years == 0:
             color_print('magenta', f'RECENTLY...')
+        elif years == 1:
+            color_print('magenta', f'1 YEAR AGO...')
         else:
             color_print('magenta', f'{years} YEARS AGO...')
         concert_to_remind_of.print_concert()
@@ -59,7 +63,7 @@ class Menu:
         color_print('magenta', f"7. Be reminded of all persons you have been to concerts with")
         # color_print('green', f"8. Remove a concert from your memory")
         # color_print('magenta', f"9. Change facts about a concert in your memory")
-        choice = input("What would you like to do (1-7)?: ")
+        choice = input("What would you like to do (1-7 or quit)?: ")
         print()
         match choice:
             case '1':
@@ -138,7 +142,7 @@ class Menu:
         artist = input("Please enter the name of an artist: ")
         found_concerts = []
         for concert in self.concerts_list:
-            if artist == concert.artist.name:
+            if fuzz.ratio(artist.lower(), concert.artist.name.lower()) > 90:
                 found_concerts.append(concert)
         if len(found_concerts) > 0:
             for concert in sorted(found_concerts, key=lambda c: c.date.date):
@@ -157,7 +161,7 @@ class Menu:
         venue = input("Please enter the name of a venue: ")
         found_concerts = []
         for concert in self.concerts_list:
-            if venue == concert.venue.name.lower():
+            if fuzz.ratio(venue.lower(), concert.venue.name.lower()) > 90:
                 found_concerts.append(concert)
         if len(found_concerts) > 0:
             for concert in sorted(found_concerts, key=lambda c: c.date.date):
@@ -196,7 +200,7 @@ class Menu:
         found_concerts = []
         for concert in self.concerts_list:
             for saved_person in concert.persons:
-                if person == saved_person.first_name:
+                if fuzz.ratio(person.lower(), saved_person.first_name) > 90:
                     found_concerts.append(concert)
         if len(found_concerts) > 0:
             for concert in sorted(found_concerts, key=lambda c: c.date.date):
@@ -224,11 +228,11 @@ class Menu:
         elif is_default_location.lower() == 'yes':
             venue = venue_name
 
-        date = input("What date was the concert (yy/mm/dd)?: ")
+        date = input("What date was the concert?: ")
 
         persons = input("Did you go with someone to the concert? If yes, please enter one or more names: ").split()
 
-        is_note = input("Would you like to add a note about this concert?")
+        is_note = input("Would you like to add a note about this concert? ")
         if is_note.lower() == 'yes':
             note = input("Please enter your notes about the concert: ")
         elif is_note.lower() == 'no':
@@ -238,6 +242,9 @@ class Menu:
         self.concerts_list.append(new_concert)
         with open('concerts.bin', 'wb') as concerts_file:
             pickle.dump(self.concerts_list, concerts_file)
+        print()
+        color_print('cyan', f"The new concert was added:\n")
+        new_concert.print_concert()
 
     def change(self, concerts):
         if len(concerts) > 1:
@@ -283,7 +290,7 @@ class Menu:
 
         self.concerts_list.append(changed_concert)
         self.concerts_list.remove(concert)
-        color_print('cyan', f"The concerted was altered with the new facts: ")
+        color_print('cyan', f"\nThe concert was altered with the new facts:\n")
         changed_concert.print_concert()
 
     def remove(self, concerts):
@@ -296,5 +303,16 @@ class Menu:
         else:
             concert = concerts[0]
 
-        self.concerts_list.remove(concert)
-        color_print('cyan', f"The chosen concert was removed")
+        while True:
+            is_sure = input("Are you sure you want to remove the concert (Y for yes, N for no)?")
+            if is_sure == 'Y':
+                self.concerts_list.remove(concert)
+                with open('concerts.bin', 'wb') as concerts_file:
+                    pickle.dump(self.concerts_list, concerts_file)
+                color_print('cyan', f"The chosen concert was removed.")
+                break
+            elif is_sure == 'N':
+                color_print('cyan', f"The concert was not removed. Going back to Main menu.")
+                break
+            else:
+                continue

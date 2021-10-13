@@ -1,6 +1,7 @@
 from artist import Artist
 from venue import Venue
-from date import Date
+from dateparser import parse
+from datetime import datetime
 from person import Person
 from note import Note
 from terminal_color import color_print
@@ -16,7 +17,7 @@ class Concert:
             venue_name, city, country = venue
             self.venue = Venue(venue_name, city, country)
 
-        self.date = Date(date)
+        self.date = parse(date)
 
         self.persons = []
         if persons[0].lower() != 'no':
@@ -26,7 +27,7 @@ class Concert:
         self.note = Note(note)
 
     def print_concert(self):
-        color_print('blue', f"* {self.date.date} you saw {self.artist.name} at {self.venue.name} in {self.venue.city}, "
+        color_print('blue', f"* {self.date.strftime('%Y-%m-%d')} you saw {self.artist.name} at {self.venue.name} in {self.venue.city}, "
                             f"{self.venue.country}.")
 
         if len(self.persons) > 0:
