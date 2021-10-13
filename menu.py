@@ -2,7 +2,6 @@ import pickle
 import random
 from fuzzywuzzy import fuzz
 from datetime import datetime
-from dateparser import parse
 from os.path import exists
 from concert import Concert
 from terminal_color import color_print

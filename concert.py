@@ -1,7 +1,6 @@
 from artist import Artist
 from venue import Venue
 from dateparser import parse
-from datetime import datetime
 from person import Person
 from note import Note
 from terminal_color import color_print
