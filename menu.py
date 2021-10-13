@@ -22,6 +22,7 @@ class Menu:
         while self.running:
             self.display_menu()
 
+    # Går det att få bort varningen för static method här?
     def get_saved_concerts(self):
         try:
             with open('concerts.bin', 'rb') as concerts_file:
@@ -42,13 +43,14 @@ class Menu:
             return None
 
         concert_to_remind_of = concerts_this_month_prev_years[random.randrange(len(concerts_this_month_prev_years))]
-        years = datetime.now().year - concert_to_remind_of.date.year
-        if years == 0:
-            color_print('magenta', f'RECENTLY...')
-        elif years == 1:
-            color_print('magenta', f'1 YEAR AGO...')
-        else:
-            color_print('magenta', f'{years} YEARS AGO...')
+        years_since_concert = datetime.now().year - concert_to_remind_of.date.year
+        match years_since_concert:
+            case 0:
+                color_print('magenta', f'RECENTLY...')
+            case 1:
+                color_print('magenta', f'1 YEAR AGO...')
+            case _:
+                color_print('magenta', f'{years_since_concert} YEARS AGO...')
         concert_to_remind_of.print_concert()
 
     def display_menu(self):
@@ -60,8 +62,6 @@ class Menu:
         color_print('magenta', f"5. Be reminded of all artists you have seen")
         color_print('green', f"6. Be reminded of all venues you have been to concerts in")
         color_print('magenta', f"7. Be reminded of all persons you have been to concerts with")
-        # color_print('green', f"8. Remove a concert from your memory")
-        # color_print('magenta', f"9. Change facts about a concert in your memory")
         choice = input("What would you like to do (1-7 or quit)?: ")
         print()
         match choice:
@@ -75,6 +75,7 @@ class Menu:
                 color_print('magenta', f"ALL CONCERTS YOU REMEMBER")
                 for concert in sorted(self.concerts_list, key=lambda c: c.date):
                     concert.print_concert()
+            # Kan man lägga 5-7 i en (samma) metod?
             case '5':
                 color_print('magenta', f"ARTISTS YOU HAVE SEEN")
                 all_artists = []
@@ -97,10 +98,6 @@ class Menu:
                         all_persons.append(person.first_name)
                 for person in sorted(list(set(all_persons))):
                     color_print('blue', f'* {person}')
-            # case '8':
-            #     self.remove()
-            # case '9':
-            #     pass
             case 'quit':
                 self.running = False
             case _:
@@ -125,6 +122,7 @@ class Menu:
                 self.search_person()
             case _: color_print('red', f"Please enter a digit 1-4")
 
+    # ett försök till en gemensam sökmetod, vet inte om det går att göra, men så här funkar det inte.
     # def search(self, search_string):
     #     found_concerts = []
     #     for concert in self.concerts_list:
@@ -256,6 +254,7 @@ class Menu:
         else:
             concert = concerts[0]
 
+        # Här skrivs samma meny ut som där man söker, borde gå att lägga detta i en printmetod
         color_print('magenta', f"1. Artist")
         color_print('green', f"2. Venue")
         color_print('magenta', f"3. Date")
@@ -268,12 +267,12 @@ class Menu:
         match fact_to_change:
             case 1:
                 changed_artist = input("Please enter the altered name of the artist: ")
-                changed_concert = Concert(changed_artist, concert.venue.name, concert.date.strftime('%Y-%m-%d'), persons_list,
-                                          concert.note.note)
+                changed_concert = Concert(changed_artist, concert.venue.name, concert.date.strftime('%Y-%m-%d'),
+                                          persons_list, concert.note.note)
             case 2:
                 changed_venue = input("Please enter the altered name of the venue: ")
-                changed_concert = Concert(concert.artist.name, changed_venue, concert.date.strftime('%Y-%m-%d'), persons_list,
-                                          concert.note.note)
+                changed_concert = Concert(concert.artist.name, changed_venue, concert.date.strftime('%Y-%m-%d'),
+                                          persons_list, concert.note.note)
             case 3:
                 changed_date = input("Please enter the altered date: ")
                 changed_concert = Concert(concert.artist.name, concert.venue.name, changed_date, persons_list,
