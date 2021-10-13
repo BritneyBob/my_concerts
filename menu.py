@@ -74,7 +74,7 @@ class Menu:
                 self.concerts_list[random.randrange(len(self.concerts_list))].print_concert()
             case '4':
                 color_print('magenta', f"ALL CONCERTS YOU REMEMBER")
-                for concert in sorted(self.concerts_list, key=lambda c: c.date.date):
+                for concert in sorted(self.concerts_list, key=lambda c: c.date):
                     concert.print_concert()
             case '5':
                 color_print('magenta', f"ARTISTS YOU HAVE SEEN")
@@ -269,11 +269,11 @@ class Menu:
         match fact_to_change:
             case 1:
                 changed_artist = input("Please enter the altered name of the artist: ")
-                changed_concert = Concert(changed_artist, concert.venue.name, concert.date.date, persons_list,
+                changed_concert = Concert(changed_artist, concert.venue.name, concert.date.strftime('%Y-%m-%d'), persons_list,
                                           concert.note.note)
             case 2:
                 changed_venue = input("Please enter the altered name of the venue: ")
-                changed_concert = Concert(concert.artist.name, changed_venue, concert.date.date, persons_list,
+                changed_concert = Concert(concert.artist.name, changed_venue, concert.date.strftime('%Y-%m-%d'), persons_list,
                                           concert.note.note)
             case 3:
                 changed_date = input("Please enter the altered date: ")
@@ -281,15 +281,17 @@ class Menu:
                                           concert.note.note)
             case 4:
                 changed_persons = input("Please enter the altered name/s of the person/s: ").split()
-                changed_concert = Concert(concert.artist.name, concert.venue.name, concert.date.date,
+                changed_concert = Concert(concert.artist.name, concert.venue.name, concert.date.strftime('%Y-%m-%d'),
                                           changed_persons, concert.note.note)
             case 5:
                 changed_note = input("Please enter the new note: ")
-                changed_concert = Concert(concert.artist.name, concert.venue.name, concert.date.date,
+                changed_concert = Concert(concert.artist.name, concert.venue.name, concert.date.strftime('%Y-%m-%d'),
                                           persons_list, changed_note)
 
         self.concerts_list.append(changed_concert)
         self.concerts_list.remove(concert)
+        with open('concerts.bin', 'wb') as concerts_file:
+            pickle.dump(self.concerts_list, concerts_file)
         color_print('cyan', f"\nThe concert was altered with the new facts:\n")
         changed_concert.print_concert()
 
