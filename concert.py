@@ -48,3 +48,32 @@ class Concert:
             else:
                 color_print('cyan', f"\n  Notes: {self.note.note}")
         print()
+
+    def return_concert_string(self):
+        concert_string = ''
+        date_artist_place_string = f"* {self.date.strftime('%Y-%m-%d')} you saw {self.artist.name} at {self.venue.name} " \
+                                   f"in {self.venue.city}, {self.venue.country}.\n"
+
+        if len(self.persons) > 0:
+            person_string = f"  You were there with "
+            for i, person in enumerate(self.persons):
+                if len(self.persons) == 1:
+                    person_string += f'{person.first_name}.'
+                elif i == len(self.persons) - 2:
+                    person_string += f'{person.first_name} '
+                elif i == len(self.persons) - 1:
+                    person_string += f'and {person.first_name}.'
+                else:
+                    person_string += f"{person.first_name}, "
+
+        concert_string += date_artist_place_string + person_string
+
+        if len(self.note.note) > 0:
+            if len(self.note.note) > 165:
+                note_string = f"\n  Notes: {self.note.note[:80]}\n"
+                note_string += f"  {self.note.note[80:]}"
+            else:
+                note_string = f"\n  Notes: {self.note.note}"
+            concert_string += note_string
+
+        return concert_string
