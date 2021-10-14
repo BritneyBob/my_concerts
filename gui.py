@@ -9,7 +9,7 @@ from terminal_color import color_print
 import PySimpleGUI as sg
 
 
-class Menu:
+class GUI:
     def __init__(self):
         self.running = True
         if exists('concerts.bin'):
@@ -18,8 +18,6 @@ class Menu:
             self.concerts_list = []
 
     def run(self):
-        #while self.running:
-            #self.display_menu()
         window = self.display()
         self.process_user_click(window)
 
@@ -51,7 +49,7 @@ class Menu:
                 case sg.WIN_CLOSED | 'Quit':
                     break
                 case 'Add concert':
-                    pass
+                    self.add_concert()
                 case 'Search concert':
                     pass
                 case 'Random concert':
@@ -100,16 +98,6 @@ class Menu:
         return remind_string + concert_string
 
     # def display_menu(self):
-    #     color_print('cyan', f"\nMAIN MENU")
-    #     color_print('magenta', f"1. Add a new concert to your memory")
-    #     color_print('green', f"2. Search for one or more concerts")
-    #     color_print('magenta', f"3. Be reminded of a random concert")
-    #     color_print('green', f"4. Be reminded of all concerts you have been to")
-    #     color_print('magenta', f"5. Be reminded of all artists you have seen")
-    #     color_print('green', f"6. Be reminded of all venues you have been to concerts in")
-    #     color_print('magenta', f"7. Be reminded of all persons you have been to concerts with")
-    #     choice = input("What would you like to do (1-7 or quit)?: ")
-    #     print()
     #     match choice:
     #         case '1':
     #             self.add_concert()
@@ -284,6 +272,16 @@ class Menu:
             return False
 
     def add_concert(self):
+        layout = [[sg.Text("Add a new concert to your memory", key="new")]]
+        window = sg.Window("Add concert", layout, modal=True)
+        choice = None
+        while True:
+            event, values = window.read()
+            match event:
+                case sg.WIN_CLOSED:
+                    break
+        window.close()
+
         artist = input("What is the name of the artist?: ")
 
         venue_name = input("What is the name of the venue?: ")
