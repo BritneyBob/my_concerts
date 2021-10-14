@@ -177,8 +177,7 @@ class Menu:
 
     def search_date(self):
         found_concerts = []
-        wrong_input = True
-        while wrong_input:
+        while True:
             kind_of_date_search = \
                 input("Enter 1 to search for a specific date or 2 to search for a range between dates: ")
             match kind_of_date_search:
@@ -188,7 +187,7 @@ class Menu:
                     for concert in self.concerts_list:
                         if date == concert.date:
                             found_concerts.append(concert)
-                    wrong_input = False
+                    break
                 case '2':
                     first_date = input("Please enter the first date: ")
                     second_date = input("Please enter the second date: ")
@@ -197,19 +196,10 @@ class Menu:
                     for concert in self.concerts_list:
                         if first_date <= concert.date <= second_date:
                             found_concerts.append(concert)
-                    wrong_input = False
+                    break
 
-        if len(found_concerts) > 0:
-            for concert in sorted(found_concerts, key=lambda c: c.date):
-                concert.print_concert()
-
-            remove_change = input("Would you like to change facts about a concert or remove a concert (enter 'change', "
-                                  "'remove' or 'no')? ")
-            if remove_change == 'change':
-                self.change(found_concerts)
-            elif remove_change == 'remove':
-                self.remove(found_concerts)
-
+        if self.print_search_result(found_concerts):
+            self.print_search_result(found_concerts)
         else:
             color_print('red', f"Unfortunately you have no recollection of a concert on the date "
                                f"{date.strftime('%Y-%m-%d')}.")
@@ -223,19 +213,30 @@ class Menu:
                 if fuzz.ratio(person.lower(), saved_person.first_name) > 90 or \
                    fuzz.partial_ratio(person.lower(), saved_person.name.lower()) > 95:
                     found_concerts.append(concert)
-        if len(found_concerts) > 0:
-            for concert in sorted(found_concerts, key=lambda c: c.date.date):
-                concert.print_concert()
-            remove_change = input("Would you like to change facts about a concert or remove a concert (enter 'change', "
-                                  "'remove' or 'no')? ")
-            if remove_change == 'change':
-                self.change(found_concerts)
-            elif remove_change == 'remove':
-                self.remove(found_concerts)
+        if self.print_search_result(found_concerts):
+            self.print_search_result(found_concerts)
         else:
-            color_print('red', f"Unfortunately you have no recollection of a concert that you went to with someone "
-                               f"called {person}.")
+            color_print('red', f"Unfortunately you have no recollection of going to a concert together with the person "
+                               f"{person}.")
             color_print('red', f"If you have gotten a new memory you can add it by choosing 1 in the main menu.")
+
+    def print_search_result(self, found_concerts):
+        if len(found_concerts) > 0:
+            for concert in sorted(found_concerts, key=lambda c: c.date):
+                concert.print_concert()
+
+            while True:
+                remove_change = input("Would you like to change facts about a concert or remove a concert "
+                                      "(enter 'change', 'remove' or 'no')? ")
+                match remove_change:
+                    case 'change':
+                        self.change(found_concerts)
+                        break
+                    case 'remove':
+                        self.remove(found_concerts)
+                        break
+        else:
+            return False
 
     def add_concert(self):
         artist = input("What is the name of the artist?: ")
@@ -284,28 +285,28 @@ class Menu:
         color_print('magenta', f"3. Date")
         color_print('green', f"4. Person")
         color_print('magenta', f"5. Note")
-        fact_to_change = int(input("Which fact would you like to change? (1-5): "))
+        fact_to_change = input("Which fact would you like to change? (1-5): ")
         persons_list = []
         for person in concert.persons:
             persons_list.append(person.first_name)
         match fact_to_change:
-            case 1:
+            case '1':
                 changed_artist = input("Please enter the altered name of the artist: ")
                 changed_concert = Concert(changed_artist, concert.venue.name, concert.date.strftime('%Y-%m-%d'),
                                           persons_list, concert.note.note)
-            case 2:
+            case '2':
                 changed_venue = input("Please enter the altered name of the venue: ")
                 changed_concert = Concert(concert.artist.name, changed_venue, concert.date.strftime('%Y-%m-%d'),
                                           persons_list, concert.note.note)
-            case 3:
+            case '3':
                 changed_date = input("Please enter the altered date: ")
                 changed_concert = Concert(concert.artist.name, concert.venue.name, changed_date, persons_list,
                                           concert.note.note)
-            case 4:
+            case '4':
                 changed_persons = input("Please enter the altered name/s of the person/s: ").split()
                 changed_concert = Concert(concert.artist.name, concert.venue.name, concert.date.strftime('%Y-%m-%d'),
                                           changed_persons, concert.note.note)
-            case 5:
+            case '5':
                 changed_note = input("Please enter the new note: ")
                 changed_concert = Concert(concert.artist.name, concert.venue.name, concert.date.strftime('%Y-%m-%d'),
                                           persons_list, changed_note)
@@ -322,21 +323,22 @@ class Menu:
             for i, concert in enumerate(concerts):
                 print(f"{i+1}.", end=' ')
                 concert.print_concert()
-                concert_choice = int(input(f"Which of the concerts would you like to remove (1-{len(concerts)})?: "))
+            concert_choice = int(input(f"Which of the concerts would you like to remove (1-{len(concerts)})?: "))
             concert = concerts(concert_choice-1)
         else:
             concert = concerts[0]
 
         while True:
             is_sure = input("Are you sure you want to remove the concert (Y for yes, N for no)?")
-            if is_sure == 'Y':
-                self.concerts_list.remove(concert)
-                with open('concerts.bin', 'wb') as concerts_file:
-                    pickle.dump(self.concerts_list, concerts_file)
-                color_print('cyan', f"The chosen concert was removed.")
-                break
-            elif is_sure == 'N':
-                color_print('cyan', f"The concert was not removed. Going back to Main menu.")
-                break
-            else:
-                continue
+            match is_sure:
+                case 'Y':
+                    self.concerts_list.remove(concert)
+                    with open('concerts.bin', 'wb') as concerts_file:
+                        pickle.dump(self.concerts_list, concerts_file)
+                    color_print('cyan', f"The chosen concert was removed.")
+                    break
+                case 'N':
+                    color_print('cyan', f"The concert was not removed. Going back to Main menu.")
+                    break
+                case _:
+                    continue
