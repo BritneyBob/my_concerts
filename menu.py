@@ -2,6 +2,7 @@ import pickle
 import random
 from fuzzywuzzy import fuzz
 from datetime import datetime
+from dateparser import parse
 from os.path import exists
 from concert import Concert
 from terminal_color import color_print
@@ -139,7 +140,8 @@ class Menu:
         artist = input("Please enter the name of an artist: ")
         found_concerts = []
         for concert in self.concerts_list:
-            if fuzz.ratio(artist.lower(), concert.artist.name.lower()) > 90:
+            if fuzz.ratio(artist.lower(), concert.artist.name.lower()) > 90 or \
+               fuzz.partial_ratio(artist.lower(), concert.artist.name.lower()) > 95:
                 found_concerts.append(concert)
         if len(found_concerts) > 0:
             for concert in sorted(found_concerts, key=lambda c: c.date.date):
@@ -174,22 +176,43 @@ class Menu:
             color_print('red', f"If you have gotten a new memory you can add it by choosing 1 in the main menu.")
 
     def search_date(self):
-        date = input("Please enter a date: ")
         found_concerts = []
-        for concert in self.concerts_list:
-            if date == concert.date.date:
-                found_concerts.append(concert)
+        wrong_input = True
+        while wrong_input:
+            kind_of_date_search = \
+                input("Enter 1 to search for a specific date or 2 to search for a range between dates: ")
+            match kind_of_date_search:
+                case '1':
+                    date = input("Please enter a date: ")
+                    date = parse(date)
+                    for concert in self.concerts_list:
+                        if date == concert.date:
+                            found_concerts.append(concert)
+                    wrong_input = False
+                case '2':
+                    first_date = input("Please enter the first date: ")
+                    second_date = input("Please enter the second date: ")
+                    first_date = parse(first_date, settings={'PREFER_DAY_OF_MONTH': 'first'})
+                    second_date = parse(second_date, settings={'PREFER_DAY_OF_MONTH': 'last'})
+                    for concert in self.concerts_list:
+                        if first_date <= concert.date <= second_date:
+                            found_concerts.append(concert)
+                    wrong_input = False
+
         if len(found_concerts) > 0:
-            for concert in sorted(found_concerts, key=lambda c: c.date.date):
+            for concert in sorted(found_concerts, key=lambda c: c.date):
                 concert.print_concert()
+
             remove_change = input("Would you like to change facts about a concert or remove a concert (enter 'change', "
                                   "'remove' or 'no')? ")
             if remove_change == 'change':
                 self.change(found_concerts)
             elif remove_change == 'remove':
                 self.remove(found_concerts)
+
         else:
-            color_print('red', f"Unfortunately you have no recollection of a concert on the date {date}.")
+            color_print('red', f"Unfortunately you have no recollection of a concert on the date "
+                               f"{date.strftime('%Y-%m-%d')}.")
             color_print('red', f"If you have gotten a new memory you can add it by choosing 1 in the main menu.")
 
     def search_person(self):
@@ -197,7 +220,8 @@ class Menu:
         found_concerts = []
         for concert in self.concerts_list:
             for saved_person in concert.persons:
-                if fuzz.ratio(person.lower(), saved_person.first_name) > 90:
+                if fuzz.ratio(person.lower(), saved_person.first_name) > 90 or \
+                   fuzz.partial_ratio(person.lower(), saved_person.name.lower()) > 95:
                     found_concerts.append(concert)
         if len(found_concerts) > 0:
             for concert in sorted(found_concerts, key=lambda c: c.date.date):
@@ -248,8 +272,8 @@ class Menu:
             for i, concert in enumerate(concerts):
                 print(f"{i+1}.", end=' ')
                 concert.print_concert()
-                concert_choice = int(input(f"Which of the concerts would you like to change facts about "
-                                           f"(1-{len(concerts)})?: "))
+            concert_choice = int(input(f"Which of the concerts would you like to change facts about "
+                                       f"(1-{len(concerts)})?: "))
             concert = concerts[concert_choice-1]
         else:
             concert = concerts[0]
