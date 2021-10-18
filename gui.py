@@ -5,7 +5,6 @@ from datetime import datetime
 from dateparser import parse
 from os.path import exists
 from concert import Concert
-from terminal_color import color_print
 import PySimpleGUI as sg
 from geopy.geocoders import Nominatim
 import re
@@ -59,52 +58,12 @@ class GUI:
                 case 'All concerts':
                     self.display_all_concerts()
                 case 'All artists':
-                    self.display_all_artists()
+                    self.display_all("artists", "All artists you have seen")
                 case 'All venues':
-                    self.display_all_venues()
+                    self.display_all("venues", "All venues you have been to concerts in")
                 case 'All persons':
-                    self.display_all_persons()
+                    self.display_all("persons", "All persons you have been to concerts with")
         window.close()
-
-    # def display_menu(self):
-    #     match choice:
-    #         case '1':
-    #             self.add_concert()
-    #         case '2':
-    #             self.search_menu()
-    #         case '3':
-    #             self.concerts_list[random.randrange(len(self.concerts_list))].print_concert()
-    #         case '4':
-    #             color_print('magenta', f"ALL CONCERTS YOU REMEMBER")
-    #             for concert in sorted(self.concerts_list, key=lambda c: c.date):
-    #                 concert.print_concert()
-    #         # Kan man lägga 5-7 i en (samma) metod?
-    #         case '5':
-    #             color_print('magenta', f"ARTISTS YOU HAVE SEEN")
-    #             all_artists = []
-    #             for concert in self.concerts_list:
-    #                 all_artists.append(concert.artist.name)
-    #             for artist in sorted(list(set(all_artists)), key=str.casefold):
-    #                 color_print('blue', f'* {artist}')
-    #         case '6':
-    #             color_print('magenta', f"VENUES YOU HAVE SEEN CONCERTS IN")
-    #             all_venues = []
-    #             for concert in self.concerts_list:
-    #                 all_venues.append(concert.venue.name)
-    #             for artist in sorted(list(set(all_venues))):
-    #                 color_print('blue', f'* {artist}')
-    #         case '7':
-    #             color_print('magenta', f"PEOPLE YOU HAVE BEEN TO CONCERTS WITH")
-    #             all_persons = []
-    #             for concert in self.concerts_list:
-    #                 for person in concert.persons:
-    #                     all_persons.append(person.first_name)
-    #             for person in sorted(list(set(all_persons))):
-    #                 color_print('blue', f'* {person}')
-    #         case 'quit':
-    #             self.running = False
-    #         case _:
-    #             color_print('red', f"Please enter a choice 1-7")
 
     # Går det att få bort varningen för static method här?
     def get_saved_concerts(self):
@@ -214,124 +173,72 @@ class GUI:
                     break
                 case 'OK':
                     if values["ARTIST"]:
-                        self.display_artist_search_result(values)
+                        self.display_search_result("artist", values)
                     elif values["VENUE"]:
-                        self.display_venue_search_result(values)
+                        self.display_search_result("venue", values)
                     elif values["DATE"]:
-                        self.display_date_search_result(values)
+                        self.display_search_result("date", values)
                     elif values["PERSON"]:
-                        self.display_person_search_result(values)
+                        self.display_search_result("person", values)
                 case 'Back':
                     break
         window.close()
 
-    def display_artist_search_result(self, values):
+    def display_search_result(self, search, values):
         found_concerts = []
-        artist = values[0]
+        search_string = values[0]
 
         for concert in self.concerts_list:
-            if fuzz.ratio(artist.lower(), concert.artist.name.lower()) > 90 or \
-               fuzz.partial_ratio(artist.lower(), concert.artist.name.lower()) > 95:
-                found_concerts.append(concert)
-
-        if len(found_concerts) > 0:
-            print_concerts_string = ''
-            # for concert in sorted(found_concerts, key=lambda c: c.date.date):
-            for concert in found_concerts:
-                print_concerts_string += concert.return_concert_string() + '\n\n'
-            layout = [[sg.Text(print_concerts_string)],
-                      [sg.Button('Change')],
-                      [sg.Button('Remove')],
-                      [sg.Button('Back')],
-                      [sg.Button('Main menu')]]
-        else:
-            layout = [[sg.Text(f"Unfortunately you have no recollection of a concert with the artist {artist}.")],
-                      [sg.Text(f"If you have gotten a new memory you can add it in the main menu.")]]
-
-        self.display_search_result(layout, found_concerts)
-
-    def display_venue_search_result(self, values):
-        venue = values[0]
-        found_concerts = []
-
-        for concert in self.concerts_list:
-            if fuzz.ratio(venue.lower(), concert.venue.name.lower()) > 90:
-                found_concerts.append(concert)
-
-        if len(found_concerts) > 0:
-            print_concerts_string = ''
-            # for concert in sorted(found_concerts, key=lambda c: c.date.date):
-            for concert in found_concerts:
-                print_concerts_string += concert.return_concert_string() + '\n\n'
-            layout = [[sg.Text(print_concerts_string)],
-                      [sg.Button('Change')],
-                      [sg.Button('Remove')],
-                      [sg.Button('Back')],
-                      [sg.Button('Main menu')]]
-        else:
-            layout = [[sg.Text(f"Unfortunately you have no recollection of a concert at the venue {venue}.")],
-                      [sg.Text(f"If you have gotten a new memory you can add it in the main menu.")]]
-
-        self.display_search_result(layout, found_concerts)
-
-    def display_date_search_result(self, values):
-        found_concerts = []
-        while True:
-            kind_of_date_search = \
-                input("Enter 1 to search for a specific date or 2 to search for a range between dates: ")
-            match kind_of_date_search:
-                case '1':
-                    date = input("Please enter a date: ")
-                    date = parse(date)
-                    for concert in self.concerts_list:
-                        if date == concert.date:
+            match search:
+                case "artist":
+                    if fuzz.ratio(search_string.lower(), concert.artist.name.lower()) > 90 or \
+                            fuzz.partial_ratio(search_string.lower(), concert.artist.name.lower()) > 95:
+                        found_concerts.append(concert)
+                case "venue":
+                    if fuzz.ratio(search_string.lower(), concert.venue.name.lower()) > 90:
+                        found_concerts.append(concert)
+                case "date":
+                    while True:
+                        kind_of_date_search = \
+                            input("Enter 1 to search for a specific date or 2 to search for a range between dates: ")
+                        match kind_of_date_search:
+                            case '1':
+                                date = input("Please enter a date: ")
+                                date = parse(date)
+                                for concert in self.concerts_list:
+                                    if date == concert.date:
+                                        found_concerts.append(concert)
+                                break
+                            case '2':
+                                first_date = input("Please enter the first date: ")
+                                second_date = input("Please enter the second date: ")
+                                first_date = parse(first_date, settings={'PREFER_DAY_OF_MONTH': 'first'})
+                                second_date = parse(second_date, settings={'PREFER_DAY_OF_MONTH': 'last'})
+                                for concert in self.concerts_list:
+                                    if first_date <= concert.date <= second_date:
+                                        found_concerts.append(concert)
+                                break
+                case "person":
+                    for saved_person in concert.persons:
+                        if fuzz.ratio(search_string.lower(), saved_person.first_name) > 90 or \
+                                fuzz.partial_ratio(search_string.lower(), saved_person.first_name.lower()) > 95:
                             found_concerts.append(concert)
-                    break
-                case '2':
-                    first_date = input("Please enter the first date: ")
-                    second_date = input("Please enter the second date: ")
-                    first_date = parse(first_date, settings={'PREFER_DAY_OF_MONTH': 'first'})
-                    second_date = parse(second_date, settings={'PREFER_DAY_OF_MONTH': 'last'})
-                    for concert in self.concerts_list:
-                        if first_date <= concert.date <= second_date:
-                            found_concerts.append(concert)
-                    break
-
-        if self.print_search_result(found_concerts):
-            self.print_search_result(found_concerts)
-        else:
-            color_print('red', f"Unfortunately you have no recollection of a concert on the date "
-                               f"{date.strftime('%Y-%m-%d')}.")
-            color_print('red', f"If you have gotten a new memory you can add it by choosing 1 in the main menu.")
-
-    def display_person_search_result(self, values):
-        person = values[0]
-        found_concerts = []
-
-        for concert in self.concerts_list:
-            for saved_person in concert.persons:
-                if fuzz.ratio(person.lower(), saved_person.first_name) > 90 or \
-                   fuzz.partial_ratio(person.lower(), saved_person.first_name.lower()) > 95:
-                    found_concerts.append(concert)
 
         if len(found_concerts) > 0:
-            print_concerts_string = ''
-            # for concert in sorted(found_concerts, key=lambda c: c.date.date):
-            for concert in found_concerts:
-                print_concerts_string += concert.return_concert_string() + '\n\n'
-            layout = [[sg.Text(print_concerts_string)],
-                      [sg.Button('Change')],
-                      [sg.Button('Remove')],
-                      [sg.Button('Back')],
-                      [sg.Button('Main menu')]]
+            self.display_found(found_concerts)
         else:
-            layout = [[sg.Text(f"Unfortunately you have no recollection of going to a concert together with the person "
-                               f"{person}.")],
-                      [sg.Text(f"If you have gotten a new memory you can add it in the main menu.")]]
+            self.display_not_found(search, search_string)
 
-        self.display_search_result(layout, found_concerts)
+    def display_found(self, found_concerts):
+        print_concerts_string = ''
+        for concert in sorted(found_concerts, key=lambda c: c.date):
+            print_concerts_string += concert.return_concert_string() + '\n\n'
+        layout = [[sg.Text(print_concerts_string)],
+                  [sg.Button('Change')],
+                  [sg.Button('Remove')],
+                  [sg.Button('Back')],
+                  [sg.Button('Main menu')]]
 
-    def display_search_result(self, layout, found_concerts):
         window = sg.Window("Search result", layout, modal=True)
 
         while True:
@@ -348,6 +255,33 @@ class GUI:
                 case 'Main menu':
                     break
             window.close()
+
+    def display_not_found(self, sort_to_search, search_string):
+        layout = None
+        match sort_to_search:
+            case "artist":
+                layout = [[sg.Text(f"Unfortunately you have no recollection of a concert with the artist {search_string}.")],
+                          [sg.Text(f"If you have gotten a new memory you can add it in the main menu.")],
+                          [sg.Button("OK")]]
+            case "venue":
+                layout = [[sg.Text(f"Unfortunately you have no recollection of a concert at the venue {search_string}.")],
+                          [sg.Text(f"If you have gotten a new memory you can add it in the main menu.")],
+                          [sg.Button("OK")]]
+            case "date":
+                layout = [[sg.Text(f"Unfortunately you have no recollection of concert on the date"
+                                   f"{search_string.strftime('%Y-%m-%d')}.")],
+                          [sg.Text(f"If you have gotten a new memory you can add it in the main menu.")],
+                          [sg.Button("OK")]]
+
+            case "person":
+                layout = [[sg.Text(f"Unfortunately you have no recollection of going to a concert together with "
+                                   f"the person {search_string}.")],
+                          [sg.Text(f"If you have gotten a new memory you can add it in the main menu.")],
+                          [sg.Button("OK")]]
+
+        window = sg.Window("Not found", layout, modal=True)
+
+        self.read_window_ok_button(window)
 
     def concert_to_change(self, concerts):
         if len(concerts) > 1:
@@ -415,14 +349,8 @@ class GUI:
                   [sg.Text(altered_concert.return_concert_string())],
                   [sg.Button('OK')]]
         window = sg.Window("Changed concert", layout, modal=True)
-        while True:
-            event, values = window.read()
-            match event:
-                case sg.WIN_CLOSED:
-                    break
-                case 'OK':
-                    break
-        window.close()
+
+        self.read_window_ok_button(window)
 
     def remove_is_sure(self, concerts):
         if len(concerts) > 1:
@@ -472,100 +400,46 @@ class GUI:
                   [sg.Button("OK")]]
         window = sg.Window("Removed concert", layout, modal=True)
 
-        while True:
-            event, values = window.read()
-            match event:
-                case sg.WIN_CLOSED:
-                    break
-                case "OK":
-                    break
-        window.close()
+        self.read_window_ok_button(window)
 
     def display_random(self):
         concert_string = self.concerts_list[random.randrange(len(self.concerts_list))].return_concert_string()
         layout = [[sg.Text(concert_string)], [sg.Button("OK")]]
         window = sg.Window("Random concert", layout, modal=True)
 
-        while True:
-            event, values = window.read()
-            match event:
-                case sg.WIN_CLOSED:
-                    break
-                case "OK":
-                    break
-        window.close()
+        self.read_window_ok_button(window)
 
     def display_all_concerts(self):
         all_concerts = ""
-        for concert in self.concerts_list:
+        for concert in sorted(self.concerts_list, key=lambda c: c.date):
             all_concerts += concert.print_concert_summary() + "\n"
-        # all_artists = []
-        # for artist in sorted(list(set(all_artists)), key=str.casefold):
 
         layout = [[sg.Text(all_concerts)], [sg.Button("OK")]]
         window = sg.Window("All concerts you have seen", layout, modal=True)
 
-        while True:
-            event, values = window.read()
-            match event:
-                case sg.WIN_CLOSED:
-                    break
-                case "OK":
-                    break
-        window.close()
+        self.read_window_ok_button(window)
 
-    def display_all_artists(self):
-        all_artists = []
+    def display_all(self, items, title):
+        all_items = []
         for concert in self.concerts_list:
-            all_artists.append(concert.artist.name)
-        artists = ""
-        for artist in sorted(list(set(all_artists)), key=str.casefold):
-            artists += "* " + artist + "\n"
+            match items:
+                case "artists":
+                    all_items.append(concert.artist.name)
+                case "venues":
+                    all_items.append(concert.venue.name)
+                case "persons":
+                    for person in concert.persons:
+                        all_items.append(person.first_name)
+        all_items_string = ""
+        for x in sorted(list(set(all_items)), key=str.casefold):
+            all_items_string += "* " + x + "\n"
 
-        layout = [[sg.Text(artists)], [sg.Button("OK")]]
-        window = sg.Window("Artists you have seen", layout, modal=True)
+        layout = [[sg.Text(all_items_string)], [sg.Button("OK")]]
+        window = sg.Window(title, layout, modal=True)
 
-        while True:
-            event, values = window.read()
-            match event:
-                case sg.WIN_CLOSED:
-                    break
-                case "OK":
-                    break
-        window.close()
+        self.read_window_ok_button(window)
 
-    def display_all_venues(self):
-        all_venues = []
-        for concert in self.concerts_list:
-            all_venues.append(concert.venue.name)
-        venues = ""
-        for venue in sorted(list(set(all_venues)), key=str.casefold):
-            venues += "* " + venue + "\n"
-
-        layout = [[sg.Text(venues)], [sg.Button("OK")]]
-        window = sg.Window("Venues you have been to", layout, modal=True)
-
-        while True:
-            event, values = window.read()
-            match event:
-                case sg.WIN_CLOSED:
-                    break
-                case "OK":
-                    break
-        window.close()
-
-    def display_all_persons(self):
-        all_persons = []
-        for concert in self.concerts_list:
-            for person in concert.persons:
-                all_persons.append(person.first_name)
-        persons = ""
-        for person in sorted(list(set(all_persons))):
-            persons += "* " + person + "\n"
-
-        layout = [[sg.Text(persons)], [sg.Button("OK")]]
-        window = sg.Window("Persons you have been to concerts with", layout, modal=True)
-
+    def read_window_ok_button(self, window):
         while True:
             event, values = window.read()
             match event:
