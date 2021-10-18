@@ -77,3 +77,6 @@ class Concert:
             concert_string += note_string
 
         return concert_string
+
+    def print_concert_summary(self):
+        return f"* {self.date.strftime('%Y-%m-%d')}: {self.artist.name}, {self.venue.name} "
