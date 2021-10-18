@@ -18,54 +18,7 @@ class GUI:
         else:
             self.concerts_list = []
 
-    def run(self):
-        window = self.display()
-        self.process_user_click(window)
-
-    def display(self):
-        if len(self.concerts_list) > 0:
-            concert_to_remind_of = self.print_concert_prev_year_same_month()
-            welcome_string = 'Welcome! My Concerts helps you remember the concerts you have been to.\n\n\n' + \
-                             concert_to_remind_of + '\n\n'
-        else:
-            welcome_string = 'Welcome! My Concerts helps you remember the concerts you have been to.\n\n\n'
-
-        layout = [[sg.Text(welcome_string)],
-                  [sg.Button('Add concert')],
-                  [sg.Button('Search concert')],
-                  [sg.Button('Random concert')],
-                  [sg.Button('All concerts')],
-                  [sg.Button('All artists')],
-                  [sg.Button('All venues')],
-                  [sg.Button('All persons')],
-                  [sg.Button('Quit')]]
-        window = sg.Window("My Concerts", layout)
-
-        return window
-
-    def process_user_click(self, window):
-        while True:
-            event, values = window.read()
-            match event:
-                case sg.WIN_CLOSED | 'Quit':
-                    break
-                case 'Add concert':
-                    self.display_add_concert()
-                case 'Search concert':
-                    self.display_search_menu()
-                case 'Random concert':
-                    self.display_random()
-                case 'All concerts':
-                    self.display_all_concerts()
-                case 'All artists':
-                    self.display_all("artists", "All artists you have seen")
-                case 'All venues':
-                    self.display_all("venues", "All venues you have been to concerts in")
-                case 'All persons':
-                    self.display_all("persons", "All persons you have been to concerts with")
-        window.close()
-
-    # Går det att få bort varningen för static method här?
+    # TODO: How to remove static method warning here and on row 146 (get_country()) and on row 452 (read_window...())?
     def get_saved_concerts(self):
         try:
             with open('concerts.bin', 'rb') as concerts_file:
@@ -73,6 +26,10 @@ class GUI:
                 return saved_concerts
         except EOFError:
             return []
+
+    def run(self):
+        window = self.display_menu()
+        self.process_user_click(window)
 
     def print_concert_prev_year_same_month(self):
         current_month = datetime.now().month
@@ -98,7 +55,50 @@ class GUI:
         concert_string = concert_to_remind_of.return_concert_string()
         return remind_string + concert_string
 
-    def display_add_concert(self):
+    def display_menu(self):
+        if len(self.concerts_list) > 0:
+            concert_to_remind_of = self.print_concert_prev_year_same_month()
+            welcome_string = 'Welcome! My Concerts helps you remember the concerts you have been to.\n\n\n' + \
+                             concert_to_remind_of + '\n\n'
+        else:
+            welcome_string = 'Welcome! My Concerts helps you remember the concerts you have been to.\n\n\n'
+
+        layout = [[sg.Text(welcome_string)],
+                  [sg.Button('Add concert')],
+                  [sg.Button('Search for concert')],
+                  [sg.Button('Random concert')],
+                  [sg.Button('All concerts')],
+                  [sg.Button('All artists')],
+                  [sg.Button('All venues')],
+                  [sg.Button('All persons')],
+                  [sg.Button('Quit')]]
+        window = sg.Window("My Concerts", layout)
+
+        return window
+
+    def process_user_click(self, window):
+        while True:
+            event, values = window.read()
+            match event:
+                case sg.WIN_CLOSED | 'Quit':
+                    break
+                case 'Add concert':
+                    self.display_add_menu()
+                case 'Search for concert':
+                    self.display_search_menu()
+                case 'Random concert':
+                    self.display_random_concert()
+                case 'All concerts':
+                    self.display_all_concerts()
+                case 'All artists':
+                    self.display_all("artists", "All artists you have seen")
+                case 'All venues':
+                    self.display_all("venues", "All venues you have been to concerts in")
+                case 'All persons':
+                    self.display_all("persons", "All persons you have been to concerts with")
+        window.close()
+
+    def display_add_menu(self):
         layout = [[sg.Text("Add a new concert to your memory", key="new")],
                   [sg.Text("Artist"), sg.Input()],
                   [sg.Text("Venue"), sg.Input()],
@@ -109,7 +109,6 @@ class GUI:
                   [sg.Button("OK")],
                   [sg.Button("Back")]]
         window = sg.Window("Add concert", layout, modal=True)
-        # choice = None
         while True:
             event, values = window.read()
             match event:
@@ -141,18 +140,12 @@ class GUI:
                   [sg.Text(new_concert.return_concert_string())],
                   [sg.Button('OK')]]
         window = sg.Window("New concert", layout, modal=True)
-        while True:
-            event, values = window.read()
-            match event:
-                case sg.WIN_CLOSED:
-                    break
-                case 'OK':
-                    break
-        window.close()
+
+        self.read_window_ok_button(window)
 
     def get_country(self, city):
-        geolocator = Nominatim(user_agent="geoapiExercises")
-        location = geolocator.geocode(city)
+        locator = Nominatim(user_agent="geoapiExercises")
+        location = locator.geocode(city)
         regex = re.compile(r'[^,]*$')
         return regex.findall(location.raw['display_name'])[0].lstrip()
 
@@ -160,8 +153,8 @@ class GUI:
         layout = ([[sg.Text("Search"), sg.Input()],
                    [sg.Radio("Artist", 'RADIO1', default=True, key="ARTIST")],
                    [sg.Radio("Venue", 'RADIO1', key="VENUE")],
-                   [sg.Radio("Date", 'RADIO1', key="DATE")],
                    [sg.Radio("Person", 'RADIO1', key="PERSON")],
+                   [sg.Button("Search by date (new window)")],
                    [sg.Button('OK')],
                    [sg.Button('Back')]])
         window = sg.Window("Search concert", layout, modal=True)
@@ -176,10 +169,34 @@ class GUI:
                         self.display_search_result("artist", values)
                     elif values["VENUE"]:
                         self.display_search_result("venue", values)
-                    elif values["DATE"]:
-                        self.display_search_result("date", values)
+                    # elif values["DATE"]:
+                    #     self.display_search_result("date", values)
                     elif values["PERSON"]:
                         self.display_search_result("person", values)
+                case "Search by date (opens in a new window)":
+                    self.date_search()
+                case 'Back':
+                    break
+        window.close()
+
+    def date_search(self):
+        layout = [[sg.Text("Enter a specific date here...")],
+                  [sg.Text("Date"), sg.Input()],
+                  [sg.Text("...or enter two dates for a search between a range of dates here")],
+                  [sg.Text("Date 1"), sg.Input()],
+                  [sg.Text("Date 2"), sg.Input()],
+                  [sg.Button("OK")],
+                  [sg.Button("Back")]]
+
+        window = sg.Window("Enter date", layout, modal=True)
+
+        while True:
+            event, values = window.read()
+            match event:
+                case sg.WIN_CLOSED:
+                    break
+                case 'OK':
+                    self.display_search_result("date", values)
                 case 'Back':
                     break
         window.close()
@@ -194,30 +211,22 @@ class GUI:
                     if fuzz.ratio(search_string.lower(), concert.artist.name.lower()) > 90 or \
                             fuzz.partial_ratio(search_string.lower(), concert.artist.name.lower()) > 95:
                         found_concerts.append(concert)
+
                 case "venue":
                     if fuzz.ratio(search_string.lower(), concert.venue.name.lower()) > 90:
                         found_concerts.append(concert)
+
                 case "date":
-                    while True:
-                        kind_of_date_search = \
-                            input("Enter 1 to search for a specific date or 2 to search for a range between dates: ")
-                        match kind_of_date_search:
-                            case '1':
-                                date = input("Please enter a date: ")
-                                date = parse(date)
-                                for concert in self.concerts_list:
-                                    if date == concert.date:
-                                        found_concerts.append(concert)
-                                break
-                            case '2':
-                                first_date = input("Please enter the first date: ")
-                                second_date = input("Please enter the second date: ")
-                                first_date = parse(first_date, settings={'PREFER_DAY_OF_MONTH': 'first'})
-                                second_date = parse(second_date, settings={'PREFER_DAY_OF_MONTH': 'last'})
-                                for concert in self.concerts_list:
-                                    if first_date <= concert.date <= second_date:
-                                        found_concerts.append(concert)
-                                break
+                    if values[0] != '':
+                        date = parse(values[0])
+                        if date == concert.date:
+                            found_concerts.append(concert)
+                    else:
+                        first_date = parse(values[1], settings={'PREFER_DAY_OF_MONTH': 'first'})
+                        second_date = parse(values[2], settings={'PREFER_DAY_OF_MONTH': 'last'})
+                        if first_date <= concert.date <= second_date:
+                            found_concerts.append(concert)
+
                 case "person":
                     for saved_person in concert.persons:
                         if fuzz.ratio(search_string.lower(), saved_person.first_name) > 90 or \
@@ -260,16 +269,19 @@ class GUI:
         layout = None
         match sort_to_search:
             case "artist":
-                layout = [[sg.Text(f"Unfortunately you have no recollection of a concert with the artist {search_string}.")],
+                layout = [[sg.Text(f"Unfortunately you have no recollection of a concert with the artist "
+                                   f"{search_string}.")],
                           [sg.Text(f"If you have gotten a new memory you can add it in the main menu.")],
                           [sg.Button("OK")]]
             case "venue":
-                layout = [[sg.Text(f"Unfortunately you have no recollection of a concert at the venue {search_string}.")],
+                layout = [[sg.Text(f"Unfortunately you have no recollection of a concert at the venue "
+                                   f"{search_string}.")],
                           [sg.Text(f"If you have gotten a new memory you can add it in the main menu.")],
                           [sg.Button("OK")]]
             case "date":
-                layout = [[sg.Text(f"Unfortunately you have no recollection of concert on the date"
-                                   f"{search_string.strftime('%Y-%m-%d')}.")],
+                # TODO: Print date with strftime?
+                layout = [[sg.Text(f"Unfortunately you have no recollection of a concert on the date "
+                                   f"{search_string}.")],
                           [sg.Text(f"If you have gotten a new memory you can add it in the main menu.")],
                           [sg.Button("OK")]]
 
@@ -328,12 +340,12 @@ class GUI:
                 case sg.WIN_CLOSED:
                     break
                 case 'OK':
-                    self.change_concert(values)
+                    self.change_concert(values, concert)
                 case 'Back':
                     break
         window.close()
 
-    def change_concert(self, values):
+    def change_concert(self, values, concert):
         artist = values[0]
         venue = values[1]
         date = values[2]
@@ -342,6 +354,7 @@ class GUI:
 
         altered_concert = Concert(artist, venue, date, persons, note)
         self.concerts_list.append(altered_concert)
+        self.concerts_list.remove(concert)
         with open('concerts.bin', 'wb') as concerts_file:
             pickle.dump(self.concerts_list, concerts_file)
 
@@ -402,7 +415,7 @@ class GUI:
 
         self.read_window_ok_button(window)
 
-    def display_random(self):
+    def display_random_concert(self):
         concert_string = self.concerts_list[random.randrange(len(self.concerts_list))].return_concert_string()
         layout = [[sg.Text(concert_string)], [sg.Button("OK")]]
         window = sg.Window("Random concert", layout, modal=True)

@@ -3,7 +3,7 @@ from venue import Venue
 from dateparser import parse
 from person import Person
 from note import Note
-from terminal_color import color_print
+from my_concerts_old_code.terminal_color import color_print
 
 
 class Concert:

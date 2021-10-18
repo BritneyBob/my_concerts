@@ -1,4 +1,3 @@
-from menu import Menu
 from gui import GUI
 
 
