@@ -1,3 +1,5 @@
+# TODO: Check where there needs to be back to main menu-buttons and fix that feature
+
 import pickle
 import random
 from fuzzywuzzy import fuzz
@@ -169,11 +171,9 @@ class GUI:
                         self.display_search_result("artist", values)
                     elif values["VENUE"]:
                         self.display_search_result("venue", values)
-                    # elif values["DATE"]:
-                    #     self.display_search_result("date", values)
                     elif values["PERSON"]:
                         self.display_search_result("person", values)
-                case "Search by date (opens in a new window)":
+                case "Search by date (new window)":
                     self.date_search()
                 case 'Back':
                     break
@@ -218,6 +218,7 @@ class GUI:
 
                 case "date":
                     if values[0] != '':
+                        # TODO: Check that input is a date
                         date = parse(values[0])
                         if date == concert.date:
                             found_concerts.append(concert)
@@ -256,9 +257,9 @@ class GUI:
                 case sg.WIN_CLOSED:
                     break
                 case 'Change':
-                    self.concert_to_change(found_concerts)
+                    self.change(found_concerts)
                 case 'Remove':
-                    self.remove_is_sure(found_concerts)
+                    self.remove(found_concerts)
                 case 'Back':
                     break
                 case 'Main menu':
@@ -266,86 +267,31 @@ class GUI:
             window.close()
 
     def display_not_found(self, sort_to_search, search_string):
-        layout = None
+        no_memory_string = ''
         match sort_to_search:
             case "artist":
-                layout = [[sg.Text(f"Unfortunately you have no recollection of a concert with the artist "
-                                   f"{search_string}.")],
-                          [sg.Text(f"If you have gotten a new memory you can add it in the main menu.")],
-                          [sg.Button("OK")]]
+                no_memory_string = "Unfortunately you have no recollection of a concert with the artist", \
+                                   search_string, "."
             case "venue":
-                layout = [[sg.Text(f"Unfortunately you have no recollection of a concert at the venue "
-                                   f"{search_string}.")],
-                          [sg.Text(f"If you have gotten a new memory you can add it in the main menu.")],
-                          [sg.Button("OK")]]
+                no_memory_string = "Unfortunately you have no recollection of a concert at the venue", search_string, \
+                                   "."
             case "date":
-                # TODO: Print date with strftime?
-                layout = [[sg.Text(f"Unfortunately you have no recollection of a concert on the date "
-                                   f"{search_string}.")],
-                          [sg.Text(f"If you have gotten a new memory you can add it in the main menu.")],
-                          [sg.Button("OK")]]
-
+                date = parse(search_string)
+                no_memory_string = "Unfortunately you have no recollection of a concert on the date", \
+                                   date.strftime('%Y-%m-%d'), "."
             case "person":
-                layout = [[sg.Text(f"Unfortunately you have no recollection of going to a concert together with "
-                                   f"the person {search_string}.")],
-                          [sg.Text(f"If you have gotten a new memory you can add it in the main menu.")],
-                          [sg.Button("OK")]]
+                no_memory_string = "Unfortunately you have no recollection of going to a concert together with the " \
+                                   "person", search_string, "."
+
+        layout = [[sg.Text(no_memory_string)],
+                  [sg.Text(f"If you have gotten a new memory you can add it in the main menu.")],
+                  [sg.Button("OK")]]
 
         window = sg.Window("Not found", layout, modal=True)
-
         self.read_window_ok_button(window)
 
-    def concert_to_change(self, concerts):
-        if len(concerts) > 1:
-            # buttons_text = []
-            # for concert in concerts:
-            #     buttons_text.append(concert.print_concert_summary())
-            #
-            # layout = [[sg.Text("Please click on the concert you want to change:")],
-            #           [sg.Button(buttons_text[0])]]
-            # window = sg.Window("Choose concert", layout, modal=True)
-            #
-            # while True:
-            #     event, values = window.read()
-            #     match event:
-            #         case sg.WIN_CLOSED:
-            #             break
-            #         case buttons_text[0]:
-            #             concert = concerts[0]
-            #
-            #     window.close()
-            concert = concerts[0]
-
-        else:
-            concert = concerts[0]
-
-        self.change(concert)
-
-    def change(self, concert):
-        persons_list = [person.first_name for person in concert.persons]
-
-        layout = [[sg.Text("Add a new concert to your memory", key="new")],
-                  [sg.Text("Artist"), sg.Input(concert.artist.name)],
-                  [sg.Text("Venue"), sg.Input(concert.venue.name)],
-                  [sg.Text("Date"), sg.Input(concert.date.strftime('%Y-%m-%d'))],
-                  [sg.Text("Person/s you went with"), sg.Multiline(' '.join(persons_list))],  # TODO: join med komma?
-                  [sg.Text("Note"), sg.Multiline(concert.note.note)],
-                  [sg.Button("OK")],
-                  [sg.Button("Back")]]
-        window = sg.Window("Change concert", layout, modal=True)
-
-        while True:
-            event, values = window.read()
-            match event:
-                case sg.WIN_CLOSED:
-                    break
-                case 'OK':
-                    self.change_concert(values, concert)
-                case 'Back':
-                    break
-        window.close()
-
-    def change_concert(self, values, concert):
+    def change(self, concerts):
+        values, concert = self.facts_to_change(concerts)
         artist = values[0]
         venue = values[1]
         date = values[2]
@@ -365,29 +311,62 @@ class GUI:
 
         self.read_window_ok_button(window)
 
-    def remove_is_sure(self, concerts):
-        if len(concerts) > 1:
-            # buttons_text = []
-            # for concert in concerts:
-            #     buttons_text.append(concert.print_concert_summary())
-            #
-            # layout = [[sg.Text("Please click on the concert you want to change:")],
-            #           [sg.Button(buttons_text[0])]]
-            # window = sg.Window("Choose concert", layout, modal=True)
-            #
-            # while True:
-            #     event, values = window.read()
-            #     match event:
-            #         case sg.WIN_CLOSED:
-            #             break
-            #         case buttons_text[0]:
-            #             concert = concerts[0]
-            #
-            #     window.close()
-            concert = concerts[0]
-        else:
-            concert = concerts[0]
+    def facts_to_change(self, concerts):
+        concert = self.choose_concert(concerts)
+        persons_list = [person.first_name for person in concert.persons]
 
+        layout = [[sg.Text("Artist"), sg.Input(concert.artist.name)],
+                  [sg.Text("Venue"), sg.Input(concert.venue.name)],
+                  [sg.Text("Date"), sg.Input(concert.date.strftime('%Y-%m-%d'))],
+                  [sg.Text("Person/s you went with"), sg.Multiline(' '.join(persons_list))],  # TODO: join med komma?
+                  [sg.Text("Note"), sg.Multiline(concert.note.note)],
+                  [sg.Button("OK")],
+                  [sg.Button("Back")]]
+        window = sg.Window("Change concert", layout, modal=True)
+
+        while True:
+            event, values = window.read()
+            match event:
+                case sg.WIN_CLOSED:
+                    break
+                case 'OK':
+                    return values, concert
+                case 'Back':
+                    break
+        window.close()
+
+    def choose_concert(self, concerts):
+        if len(concerts) > 1:
+            layout = [[sg.Text("Please click on the concert you want to change:")],
+                      *[[sg.Button(concert.print_concert_summary())]
+                        for concert in concerts]]
+            window = sg.Window("Choose concert", layout, modal=True)
+
+            while True:
+                event, values = window.read()
+                if event == sg.WIN_CLOSED:
+                    break
+                for concert in concerts:
+                    if window[event].get_text() == concert.print_concert_summary():
+                        return concert
+            window.close()
+
+        else:
+            return concerts[0]
+
+    def remove(self, concerts):
+        concert = self.choose_concert(concerts)
+        if self.is_sure(concert):
+            self.concerts_list.remove(concert)
+            with open('concerts.bin', 'wb') as concerts_file:
+                pickle.dump(self.concerts_list, concerts_file)
+            layout = [[sg.Text("The chosen concert was removed.")],
+                      [sg.Button("OK")]]
+            window = sg.Window("Removed concert", layout, modal=True)
+
+            self.read_window_ok_button(window)
+
+    def is_sure(self, concert):
         layout = [[sg.Text("Are you sure you want to remove this concert?:")],
                   [sg.Text(concert.print_concert_summary())],
                   [sg.Button("Yes, REMOVE")],
@@ -400,26 +379,15 @@ class GUI:
                 case sg.WIN_CLOSED:
                     break
                 case "Yes, REMOVE":
-                    self.remove(concert)
+                    return True
                 case "No, cancel":
                     break
         window.close()
-
-    def remove(self, concert):
-        self.concerts_list.remove(concert)
-        with open('concerts.bin', 'wb') as concerts_file:
-            pickle.dump(self.concerts_list, concerts_file)
-        layout = [[sg.Text("The chosen concert was removed.")],
-                  [sg.Button("OK")]]
-        window = sg.Window("Removed concert", layout, modal=True)
-
-        self.read_window_ok_button(window)
 
     def display_random_concert(self):
         concert_string = self.concerts_list[random.randrange(len(self.concerts_list))].return_concert_string()
         layout = [[sg.Text(concert_string)], [sg.Button("OK")]]
         window = sg.Window("Random concert", layout, modal=True)
-
         self.read_window_ok_button(window)
 
     def display_all_concerts(self):
@@ -429,7 +397,6 @@ class GUI:
 
         layout = [[sg.Text(all_concerts)], [sg.Button("OK")]]
         window = sg.Window("All concerts you have seen", layout, modal=True)
-
         self.read_window_ok_button(window)
 
     def display_all(self, items, title):
