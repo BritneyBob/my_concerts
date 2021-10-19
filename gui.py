@@ -9,6 +9,7 @@ from os.path import exists
 from concert import Concert
 import PySimpleGUI as sg
 from geopy.geocoders import Nominatim
+from geopy.exc import GeocoderTimedOut
 import re
 
 
@@ -66,7 +67,7 @@ class GUI:
             welcome_string = 'Welcome! My Concerts helps you remember the concerts you have been to.\n\n\n' + \
                              concert_to_remind_of + '\n\n'
         else:
-            welcome_string = 'Welcome! My Concerts helps you remember the concerts you have been to.\n\n\n'
+            welcome_string = 'Welcome! My Concerts helps you remember the concerts you have been to.\n'
 
         layout = [[sg.Text(welcome_string)],
                   [sg.Button('Add concert')],
@@ -110,7 +111,7 @@ class GUI:
                   [sg.Text("Venue"), sg.Input()],
                   [sg.Text("City"), sg.Input()],
                   [sg.Text("Date"), sg.Input()],
-                  [sg.Text("Person/s you went with (optional)"), sg.Multiline()],
+                  [sg.Text("Person/s you went with (optional) (separate persons with comma)"), sg.Multiline()],
                   [sg.Text("Note (optional)"), sg.Multiline()],
                   [sg.Button("OK")],
                   [sg.Button("Back")]]
@@ -121,21 +122,27 @@ class GUI:
                 case sg.WIN_CLOSED:
                     break
                 case 'OK':
-                    self.add_concert(values)
-                    break
+                    try:
+                        parse(values[3]).strftime('%Y-%m-%d')
+                        self.add_concert(values)
+                        break
+                    except AttributeError:
+                        # TODO: Fix so that the concert is not added if this happens
+                        sg.popup("Incorrect date input", "Please enter date in another format")
                 case 'Back':
                     break
         window.close()
 
     def add_concert(self, values):
-        country = self.get_country(values[2])
+        try:
+            country = self.get_country(values[2])
+        except GeocoderTimedOut:
+            country = "Country couldn't be fetched due to a time out error"
 
         artist = values[0]
         venue = (values[1], values[2], country)
         date = values[3]
-        # TODO: Kanske be om komma mellan namnen och sen split på komma, så går det att lägga till efternamn
-        #       om två heter samma förnamn.
-        persons = values[4].split()
+        persons = values[4].split(', ')
         note = values[5]
 
         new_concert = Concert(artist, venue, date, persons, note)
@@ -309,11 +316,13 @@ class GUI:
         values, concert = self.facts_to_change(concerts)
         artist = values[0]
         venue = values[1]
-        date = values[2]
-        persons = values[3].split()
-        note = values[4]
+        city = values[2]
+        country = values[3]
+        date = values[4]
+        persons = values[5].split(', ')
+        note = values[6]
 
-        altered_concert = Concert(artist, venue, date, persons, note)
+        altered_concert = Concert(artist, (venue, city, country), date, persons, note)
         self.concerts_list.append(altered_concert)
         self.concerts_list.remove(concert)
         with open('concerts.bin', 'wb') as concerts_file:
@@ -327,8 +336,10 @@ class GUI:
 
         layout = [[sg.Text("Artist"), sg.Input(concert.artist.name)],
                   [sg.Text("Venue"), sg.Input(concert.venue.name)],
+                  [sg.Text("City"), sg.Input(concert.venue.city)],
+                  [sg.Text("Country"), sg.Input(concert.venue.country)],
                   [sg.Text("Date"), sg.Input(concert.date.strftime('%Y-%m-%d'))],
-                  [sg.Text("Person/s you went with"), sg.Multiline(' '.join(persons_list))],  # TODO: join med komma?
+                  [sg.Text("Person/s you went with"), sg.Multiline(', '.join(persons_list))],
                   [sg.Text("Note"), sg.Multiline(concert.note.note)],
                   [sg.Button("OK")],
                   [sg.Button("Back")]]
@@ -348,9 +359,9 @@ class GUI:
 
     def choose_concert(self, concerts):
         if len(concerts) > 1:
-            layout = [[sg.Text("Please click on the concert you want to change:")],
+            layout = [[sg.Text("Please select a concert:")],
                       *[[sg.Button(concert.print_concert_summary())]
-                        for concert in concerts]]
+                        for concert in sorted(concerts, key=lambda c: c.date)]]
             window = sg.Window("Choose concert", layout, modal=True)
 
             while True:
