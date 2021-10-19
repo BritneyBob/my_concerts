@@ -20,7 +20,7 @@ class GUI:
         else:
             self.concerts_list = []
 
-    # TODO: How to remove static method warning here and on row 146 (get_country()) and on row 452 (read_window...())?
+    # TODO: How to remove static method warning here and on row 146 (get_country())?
     def get_saved_concerts(self):
         try:
             with open('concerts.bin', 'rb') as concerts_file:
@@ -38,8 +38,11 @@ class GUI:
         concerts_this_month_prev_years = []
 
         for concert in self.concerts_list:
-            if current_month == concert.date.month:
-                concerts_this_month_prev_years.append(concert)
+            try:
+                if current_month == concert.date.month:
+                    concerts_this_month_prev_years.append(concert)
+            except AttributeError:
+                pass
 
         if len(concerts_this_month_prev_years) == 0:
             return None
@@ -89,15 +92,16 @@ class GUI:
                 case 'Search for concert':
                     self.display_search_menu()
                 case 'Random concert':
-                    self.display_random_concert()
+                    sg.popup("Random concert",
+                             self.concerts_list[random.randrange(len(self.concerts_list))].return_concert_string())
                 case 'All concerts':
                     self.display_all_concerts()
                 case 'All artists':
-                    self.display_all("artists", "All artists you have seen")
+                    self.display_all("artists", "All artists you have seen:")
                 case 'All venues':
-                    self.display_all("venues", "All venues you have been to concerts in")
+                    self.display_all("venues", "All venues you have been to concerts in:")
                 case 'All persons':
-                    self.display_all("persons", "All persons you have been to concerts with")
+                    self.display_all("persons", "All persons you have been to concerts with:")
         window.close()
 
     def display_add_menu(self):
@@ -118,6 +122,7 @@ class GUI:
                     break
                 case 'OK':
                     self.add_concert(values)
+                    break
                 case 'Back':
                     break
         window.close()
@@ -138,12 +143,7 @@ class GUI:
         with open('concerts.bin', 'wb') as concerts_file:
             pickle.dump(self.concerts_list, concerts_file)
 
-        layout = [[sg.Text("The new concert was added to your memory:")],
-                  [sg.Text(new_concert.return_concert_string())],
-                  [sg.Button('OK')]]
-        window = sg.Window("New concert", layout, modal=True)
-
-        self.read_window_ok_button(window)
+        sg.popup("The new concert was added to your memory", new_concert.return_concert_string())
 
     def get_country(self, city):
         locator = Nominatim(user_agent="geoapiExercises")
@@ -169,12 +169,16 @@ class GUI:
                 case 'OK':
                     if values["ARTIST"]:
                         self.display_search_result("artist", values)
+                        break
                     elif values["VENUE"]:
                         self.display_search_result("venue", values)
+                        break
                     elif values["PERSON"]:
                         self.display_search_result("person", values)
+                        break
                 case "Search by date (new window)":
                     self.date_search()
+                    break
                 case 'Back':
                     break
         window.close()
@@ -197,6 +201,7 @@ class GUI:
                     break
                 case 'OK':
                     self.display_search_result("date", values)
+                    break
                 case 'Back':
                     break
         window.close()
@@ -258,8 +263,11 @@ class GUI:
                     break
                 case 'Change':
                     self.change(found_concerts)
+                    break
                 case 'Remove':
                     self.remove(found_concerts)
+                    break
+                # TODO: Back and Main menu buttons doesn't work - why?
                 case 'Back':
                     break
                 case 'Main menu':
@@ -288,7 +296,14 @@ class GUI:
                   [sg.Button("OK")]]
 
         window = sg.Window("Not found", layout, modal=True)
-        self.read_window_ok_button(window)
+        while True:
+            event, values = window.read()
+            match event:
+                case sg.WIN_CLOSED:
+                    break
+                case "OK":
+                    break
+        window.close()
 
     def change(self, concerts):
         values, concert = self.facts_to_change(concerts)
@@ -304,12 +319,7 @@ class GUI:
         with open('concerts.bin', 'wb') as concerts_file:
             pickle.dump(self.concerts_list, concerts_file)
 
-        layout = [[sg.Text("The concert was altered with the new facts:")],
-                  [sg.Text(altered_concert.return_concert_string())],
-                  [sg.Button('OK')]]
-        window = sg.Window("Changed concert", layout, modal=True)
-
-        self.read_window_ok_button(window)
+        sg.popup("The concert was altered with the new facts:", altered_concert.return_concert_string())
 
     def facts_to_change(self, concerts):
         concert = self.choose_concert(concerts)
@@ -330,6 +340,7 @@ class GUI:
                 case sg.WIN_CLOSED:
                     break
                 case 'OK':
+                    window.close()
                     return values, concert
                 case 'Back':
                     break
@@ -348,6 +359,7 @@ class GUI:
                     break
                 for concert in concerts:
                     if window[event].get_text() == concert.print_concert_summary():
+                        window.close()
                         return concert
             window.close()
 
@@ -360,11 +372,8 @@ class GUI:
             self.concerts_list.remove(concert)
             with open('concerts.bin', 'wb') as concerts_file:
                 pickle.dump(self.concerts_list, concerts_file)
-            layout = [[sg.Text("The chosen concert was removed.")],
-                      [sg.Button("OK")]]
-            window = sg.Window("Removed concert", layout, modal=True)
 
-            self.read_window_ok_button(window)
+            sg.popup("The chosen concert was removed.")
 
     def is_sure(self, concert):
         layout = [[sg.Text("Are you sure you want to remove this concert?:")],
@@ -379,25 +388,21 @@ class GUI:
                 case sg.WIN_CLOSED:
                     break
                 case "Yes, REMOVE":
+                    window.close()
                     return True
                 case "No, cancel":
                     break
         window.close()
 
-    def display_random_concert(self):
-        concert_string = self.concerts_list[random.randrange(len(self.concerts_list))].return_concert_string()
-        layout = [[sg.Text(concert_string)], [sg.Button("OK")]]
-        window = sg.Window("Random concert", layout, modal=True)
-        self.read_window_ok_button(window)
-
     def display_all_concerts(self):
         all_concerts = ""
-        for concert in sorted(self.concerts_list, key=lambda c: c.date):
-            all_concerts += concert.print_concert_summary() + "\n"
+        try:
+            for concert in sorted(self.concerts_list, key=lambda c: c.date):
+                all_concerts += concert.print_concert_summary() + "\n"
+        except TypeError:
+            pass
 
-        layout = [[sg.Text(all_concerts)], [sg.Button("OK")]]
-        window = sg.Window("All concerts you have seen", layout, modal=True)
-        self.read_window_ok_button(window)
+        sg.popup("All concerts you have seen:", all_concerts)
 
     def display_all(self, items, title):
         all_items = []
@@ -414,17 +419,4 @@ class GUI:
         for x in sorted(list(set(all_items)), key=str.casefold):
             all_items_string += "* " + x + "\n"
 
-        layout = [[sg.Text(all_items_string)], [sg.Button("OK")]]
-        window = sg.Window(title, layout, modal=True)
-
-        self.read_window_ok_button(window)
-
-    def read_window_ok_button(self, window):
-        while True:
-            event, values = window.read()
-            match event:
-                case sg.WIN_CLOSED:
-                    break
-                case "OK":
-                    break
-        window.close()
+        sg.popup(title, all_items_string)
