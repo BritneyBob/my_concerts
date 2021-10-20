@@ -116,10 +116,11 @@ class GUI:
                   [sg.Button("OK")],
                   [sg.Button("Back")]]
         window = sg.Window("Add concert", layout, modal=True)
+
         while True:
             event, values = window.read()
             match event:
-                case sg.WIN_CLOSED:
+                case sg.WIN_CLOSED | "Back":
                     break
                 case 'OK':
                     try:
@@ -129,8 +130,6 @@ class GUI:
                     except AttributeError:
                         # TODO: Fix so that the concert is not added if this happens
                         sg.popup("Incorrect date input", "Please enter date in another format")
-                case 'Back':
-                    break
         window.close()
 
     def add_concert(self, values):
@@ -171,7 +170,7 @@ class GUI:
         while True:
             event, values = window.read()
             match event:
-                case sg.WIN_CLOSED:
+                case sg.WIN_CLOSED | "Back":
                     break
                 case 'OK':
                     if values["ARTIST"]:
@@ -185,8 +184,6 @@ class GUI:
                         break
                 case "Search by date (new window)":
                     self.date_search()
-                    break
-                case 'Back':
                     break
         window.close()
 
@@ -204,12 +201,10 @@ class GUI:
         while True:
             event, values = window.read()
             match event:
-                case sg.WIN_CLOSED:
+                case sg.WIN_CLOSED | "Back":
                     break
                 case 'OK':
                     self.display_search_result("date", values)
-                    break
-                case 'Back':
                     break
         window.close()
 
@@ -258,26 +253,21 @@ class GUI:
         layout = [[sg.Text(print_concerts_string)],
                   [sg.Button('Change')],
                   [sg.Button('Remove')],
-                  [sg.Button('Back')],
-                  [sg.Button('Main menu')]]
+                  [sg.Button('Back')]]
 
         window = sg.Window("Search result", layout, modal=True)
 
         while True:
             event, values = window.read()
             match event:
-                case sg.WIN_CLOSED:
+                # TODO: Back button doesn't work - why?
+                case sg.WIN_CLOSED | "Back":
                     break
                 case 'Change':
                     self.change(found_concerts)
                     break
                 case 'Remove':
                     self.remove(found_concerts)
-                    break
-                # TODO: Back and Main menu buttons doesn't work - why?
-                case 'Back':
-                    break
-                case 'Main menu':
                     break
             window.close()
 
@@ -305,11 +295,8 @@ class GUI:
         window = sg.Window("Not found", layout, modal=True)
         while True:
             event, values = window.read()
-            match event:
-                case sg.WIN_CLOSED:
-                    break
-                case "OK":
-                    break
+            if event in (sg.WIN_CLOSED, 'OK'):
+                break
         window.close()
 
     def change(self, concerts):
@@ -348,13 +335,11 @@ class GUI:
         while True:
             event, values = window.read()
             match event:
-                case sg.WIN_CLOSED:
+                case sg.WIN_CLOSED | "Back":
                     break
                 case 'OK':
                     window.close()
                     return values, concert
-                case 'Back':
-                    break
         window.close()
 
     def choose_concert(self, concerts):
@@ -396,13 +381,11 @@ class GUI:
         while True:
             event, values = window.read()
             match event:
-                case sg.WIN_CLOSED:
+                case sg.WIN_CLOSED | "No, cancel":
                     break
                 case "Yes, REMOVE":
                     window.close()
                     return True
-                case "No, cancel":
-                    break
         window.close()
 
     def display_all_concerts(self):
