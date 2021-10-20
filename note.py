@@ -10,6 +10,7 @@ class Note:
                     note_string += c
                     if i >= 80 and c == ' ':
                         note_string += '\n ' + self.note[i:]
+                        #if len(self.note) - i > 80:
                         #if len(self.note) > 160:
                          #   note_string += c
                           #  if i >= 80 and c == ' ':
