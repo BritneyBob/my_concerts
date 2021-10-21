@@ -2,8 +2,6 @@ from gui import GUI
 
 
 def main():
-    # menu = Menu()
-    # menu.run()
     gui = GUI()
     gui.run()
 

@@ -14,11 +14,12 @@ class Concert:
 
         self.date = parse(date)
 
-        self.persons = []
-        for person in persons:
-            self.persons.append(Person(person))
+        if len(persons) > 0:
+            self.persons = [Person(person) for person in persons]
+        else:
+            self.persons = None
 
-        self.note = Note(note)
+        self.note = Note(note) if note else ""
 
     def return_concert_string(self):
         concert_string = ''
@@ -44,7 +45,11 @@ class Concert:
         else:
             concert_string += date_artist_place_string
 
-        concert_string += self.note.note_string()
+        try:
+            if self.note:
+                concert_string += self.note.note_string()
+        except AttributeError:
+            pass
 
         return concert_string
 

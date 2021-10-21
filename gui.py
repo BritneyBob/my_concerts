@@ -89,8 +89,8 @@ class GUI:
                 case 'Search for concert':
                     self.display_search_menu()
                 case 'Random concert':
-                    sg.popup("Random concert",
-                             self.concerts_list[random.randrange(len(self.concerts_list))].return_concert_string())
+                    sg.popup(self.concerts_list[random.randrange(len(self.concerts_list))].return_concert_string(),
+                             title="Random Concert", line_width=100)
                 case 'Concerts':
                     self.display_all_concerts()
                 case 'Artists':
@@ -117,13 +117,15 @@ class GUI:
                 case sg.WIN_CLOSED | "Back":
                     break
                 case 'OK':
-                    try:
-                        parse(values[3]).strftime('%Y-%m-%d')
-                        self.add_concert(values)
-                        break
-                    except AttributeError:
-                        # TODO: Fix so that the concert is not added if this happens
-                        sg.popup("Incorrect date input", "Please enter date in another format")
+                    if values[0] and values[1] and values[2] and values[3]:
+                        try:
+                            parse(values[3]).strftime('%Y-%m-%d')
+                            self.add_concert(values)
+                            break
+                        except AttributeError:
+                            sg.popup("Incorrect date input", "Please enter date in another format")
+                    else:
+                        sg.popup("Please enter artist, venue, city and date")
         window.close()
 
     def add_concert(self, values):
@@ -196,8 +198,11 @@ class GUI:
                 case sg.WIN_CLOSED | "Back":
                     break
                 case 'OK':
-                    self.display_search_result("date", values)
-                    break
+                    if values[0] or values[1] and values[2] :
+                        self.display_search_result("date", values)
+                        break
+                    else:
+                        sg.popup("Please enter one or two dates")
         window.close()
 
     def display_search_result(self, search, values):
@@ -271,9 +276,13 @@ class GUI:
                 no_memory_string = f"Unfortunately you have no recollection of a concert at the venue {search_string}."
 
             case "date":
-                date = parse(search_string)
-                no_memory_string = f"Unfortunately you have no recollection of a concert on the date " \
-                                   f"{date.strftime('%Y-%m-%d')}."
+                try:
+                    date = parse(search_string)
+                    no_memory_string = f"Unfortunately you have no recollection of a concert on the date " \
+                                       f"{date.strftime('%Y-%m-%d')}."
+                except AttributeError:
+                    no_memory_string = f"Unfortunately you have no recollection of a concert on the date " \
+                                       f"{search_string}."
             case "person":
                 no_memory_string = f"Unfortunately you have no recollection of going to a concert together with the " \
                                    f"person {search_string}."
@@ -318,14 +327,17 @@ class GUI:
 
     def facts_to_change(self, concert):
         persons_list = [person.first_name for person in concert.persons]
-
+        try:
+            note = concert.note.note
+        except AttributeError:
+            note = ""
         layout = [[sg.Text("Artist"), sg.Input(concert.artist.name)],
                   [sg.Text("Venue"), sg.Input(concert.venue.name)],
                   [sg.Text("City"), sg.Input(concert.venue.city)],
                   [sg.Text("Country"), sg.Input(concert.venue.country)],
                   [sg.Text("Date"), sg.Input(concert.date.strftime('%Y-%m-%d'))],
                   [sg.Text("Person/s you went with"), sg.Multiline(', '.join(persons_list))],
-                  [sg.Text("Note"), sg.Multiline(concert.note.note)],
+                  [sg.Text("Note"), sg.Multiline(note)],
                   [sg.Button("OK"), sg.Button("Back")]]
         window = sg.Window("Change concert", layout, element_justification='r', modal=True)
 
@@ -354,7 +366,7 @@ class GUI:
         with open('concerts.bin', 'wb') as concerts_file:
             pickle.dump(self.concerts_list, concerts_file)
 
-        sg.popup("The concert was altered with the new facts:", altered_concert.return_concert_string())
+        sg.popup("The concert was altered with the new facts:", altered_concert.return_concert_string(), line_width=100)
 
     def remove(self, concert):
         if self.is_sure(concert):
@@ -388,7 +400,7 @@ class GUI:
         except TypeError:
             pass
 
-        sg.popup("All concerts you have seen:", all_concerts)
+        sg.popup("All concerts you have seen:", all_concerts, line_width=100)
 
     def display_all(self, items, title):
         all_items = []
@@ -405,4 +417,4 @@ class GUI:
         for x in sorted(list(set(all_items)), key=str.casefold):
             all_items_string += "* " + x + "\n"
 
-        sg.popup(title, all_items_string)
+        sg.popup(title, all_items_string, line_width=100)
