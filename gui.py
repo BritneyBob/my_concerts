@@ -137,7 +137,7 @@ class GUI:
         artist = values[0]
         venue = (values[1], values[2], country)
         date = values[3]
-        persons = values[4].split(', ')
+        persons = values[4].split(', ') if values[4] != '' else []
         note = values[5]
 
         new_concert = Concert(artist, venue, date, persons, note)
@@ -357,7 +357,7 @@ class GUI:
         city = values[2]
         country = values[3]
         date = values[4]
-        persons = values[5].split(', ')
+        persons = values[5].split(', ') if values[5] != '' else []
         note = values[6]
 
         altered_concert = Concert(artist, (venue, city, country), date, persons, note)

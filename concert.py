@@ -25,11 +25,11 @@ class Concert:
         concert_string = ''
         try:
             date_artist_place_string = f"* {self.date.strftime('%Y-%m-%d')} you saw {self.artist.name} at " \
-                                       f"{self.venue.venue_string()}\n"
+                                       f"{self.venue.venue_string()}"
         except AttributeError:
-            date_artist_place_string = f"* {self.date} you saw {self.artist.name} at {self.venue.venue_string()}\n"
+            date_artist_place_string = f"* {self.date} you saw {self.artist.name} at {self.venue.venue_string()}"
 
-        if len(self.persons) > 0:
+        if self.persons:
             person_string = f"  You were there with "
             for i, person in enumerate(self.persons):
                 if len(self.persons) == 1:
@@ -41,13 +41,13 @@ class Concert:
                 else:
                     person_string += f"{person.first_name}, "
 
-            concert_string += date_artist_place_string + person_string
+            concert_string += date_artist_place_string + '\n' + person_string
         else:
             concert_string += date_artist_place_string
 
         try:
             if self.note:
-                concert_string += self.note.note_string()
+                concert_string += '\n' + self.note.note_string()
         except AttributeError:
             pass
 
