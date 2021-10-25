@@ -190,6 +190,8 @@ class GUI:
                   [sg.Text("Date 2"), sg.Input()],
                   [sg.Button("OK"), sg.Button("Back")]]
 
+        incorrect_string = "Incorrect date input. Please enter date in another format"
+
         window = sg.Window("Enter date", layout, modal=True)
 
         while True:
@@ -198,9 +200,20 @@ class GUI:
                 case sg.WIN_CLOSED | "Back":
                     break
                 case 'OK':
-                    if values[0] or values[1] and values[2] :
-                        self.display_search_result("date", values)
-                        break
+                    if values[0]:
+                        try:
+                            parse(values[0])
+                            self.display_search_result("date", values)
+                        except AttributeError:
+                            sg.popup(incorrect_string)
+                    elif values[1] and values[2]:
+                        try:
+                            date1 = parse(values[1], settings={'PREFER_DAY_OF_MONTH': 'first'})
+                            date2 = parse(values[2], settings={'PREFER_DAY_OF_MONTH': 'last'})
+                            self.display_search_result("date", (date1, date2))
+                            break
+                        except AttributeError:
+                            sg.popup(incorrect_string)
                     else:
                         sg.popup("Please enter one or two dates")
         window.close()
@@ -208,6 +221,7 @@ class GUI:
     def display_search_result(self, search, values):
         found_concerts = []
         search_string = values[0]
+        two_dates = False
 
         for concert in self.concerts_list:
             match search:
@@ -221,15 +235,12 @@ class GUI:
                         found_concerts.append(concert)
 
                 case "date":
-                    if values[0] != '':
-                        # TODO: Check that input is a date
-                        date = parse(values[0])
-                        if date == concert.date:
+                    if isinstance(values, tuple):
+                        two_dates = True
+                        if values[0] <= concert.date <= values[1]:
                             found_concerts.append(concert)
                     else:
-                        first_date = parse(values[1], settings={'PREFER_DAY_OF_MONTH': 'first'})
-                        second_date = parse(values[2], settings={'PREFER_DAY_OF_MONTH': 'last'})
-                        if first_date <= concert.date <= second_date:
+                        if parse(search_string) == concert.date:
                             found_concerts.append(concert)
 
                 case "person":
@@ -241,7 +252,10 @@ class GUI:
         if len(found_concerts) > 0:
             self.display_found(found_concerts)
         else:
-            self.display_not_found(search, search_string)
+            if two_dates:
+                self.display_not_found(search, (values[0], values[1]))
+            else:
+                self.display_not_found(search, search_string)
 
     def display_found(self, found_concerts):
         print_concerts_string = ''
@@ -255,16 +269,13 @@ class GUI:
         while True:
             event, values = window.read()
             match event:
-                # TODO: Back button doesn't work - why?
                 case sg.WIN_CLOSED | "Back":
                     break
                 case 'Change':
                     self.choose_concert(found_concerts, "change")
-                    break
                 case 'Remove':
                     self.choose_concert(found_concerts, "remove")
-                    break
-            window.close()
+        window.close()
 
     def display_not_found(self, sort_to_search, search_string):
         no_memory_string = ''
@@ -276,13 +287,15 @@ class GUI:
                 no_memory_string = f"Unfortunately you have no recollection of a concert at the venue {search_string}."
 
             case "date":
-                try:
-                    date = parse(search_string)
-                    no_memory_string = f"Unfortunately you have no recollection of a concert on the date " \
-                                       f"{date.strftime('%Y-%m-%d')}."
-                except AttributeError:
-                    no_memory_string = f"Unfortunately you have no recollection of a concert on the date " \
-                                       f"{search_string}."
+                if isinstance(search_string, tuple):
+                    date1 = search_string[0].strftime('%Y-%m-%d')
+                    date2 = search_string[1].strftime('%Y-%m-%d')
+                    no_memory_string = f"Unfortunately you have no recollection of a concert between the dates " \
+                                       f"{date1} and {date2}."
+                else:
+                    date = parse(search_string).strftime('%Y-%m-%d')
+                    no_memory_string = f"Unfortunately you have no recollection of a concert on the date {date}."
+
             case "person":
                 no_memory_string = f"Unfortunately you have no recollection of going to a concert together with the " \
                                    f"person {search_string}."
@@ -326,7 +339,10 @@ class GUI:
                 self.remove(target_concert)
 
     def facts_to_change(self, concert):
-        persons_list = [person.first_name for person in concert.persons]
+        try:
+            persons_list = [person.first_name for person in concert.persons]
+        except TypeError:
+            persons_list = []
         try:
             note = concert.note.note
         except AttributeError:
@@ -411,8 +427,11 @@ class GUI:
                 case "venues":
                     all_items.append(concert.venue.name)
                 case "persons":
-                    for person in concert.persons:
-                        all_items.append(person.first_name)
+                    try:
+                        for person in concert.persons:
+                            all_items.append(person.first_name)
+                    except TypeError:
+                        pass
         all_items_string = ""
         for x in sorted(list(set(all_items)), key=str.casefold):
             all_items_string += "* " + x + "\n"
