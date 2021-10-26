@@ -4,11 +4,11 @@ from fuzzywuzzy import fuzz
 from datetime import datetime
 from dateparser import parse
 from os.path import exists
-from concert import Concert
 import PySimpleGUI as sg
 from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut
 import re
+from concert import Concert
 
 
 class GUI:
@@ -32,7 +32,7 @@ class GUI:
         window = self.display_menu()
         self.process_user_click(window)
 
-    def print_concert_prev_year_same_month(self):
+    def get_random_concert_prev_year_this_month(self):
         current_month = datetime.now().month
         concerts_this_month_prev_years = []
 
@@ -46,9 +46,13 @@ class GUI:
         if len(concerts_this_month_prev_years) == 0:
             return None
 
-        concert_to_remind_of = concerts_this_month_prev_years[random.randrange(len(concerts_this_month_prev_years))]
-        years_since_concert = datetime.now().year - concert_to_remind_of.date.year
+        return concerts_this_month_prev_years[random.randrange(len(concerts_this_month_prev_years))]
+
+    @classmethod
+    def get_remember_concert_string(cls, concert_to_print):
+        years_since_concert = datetime.now().year - concert_to_print.date.year
         remind_string = ''
+
         match years_since_concert:
             case 0:
                 remind_string += f'RECENTLY...\n'
@@ -56,14 +60,16 @@ class GUI:
                 remind_string += f'1 YEAR AGO...\n'
             case _:
                 remind_string += f'{years_since_concert} YEARS AGO...\n'
-        concert_string = concert_to_remind_of.return_concert_string()
+        concert_string = concert_to_print.get_concert_long_string()
+
         return remind_string + concert_string
 
     def display_menu(self):
         if len(self.concerts_list) > 0:
-            concert_to_remind_of = self.print_concert_prev_year_same_month()
+            random_concert_prev_year_this_month = self.get_random_concert_prev_year_this_month()
+            concert_to_remind_of_string = self.get_remember_concert_string(random_concert_prev_year_this_month)
             welcome_string = 'Welcome! My Concerts helps you remember the concerts you have been to.\n\n' + \
-                             concert_to_remind_of + '\n'
+                             concert_to_remind_of_string + '\n'
         else:
             welcome_string = 'Welcome! My Concerts helps you remember the concerts you have been to.\n'
 
@@ -87,7 +93,7 @@ class GUI:
                 case 'Search for concert':
                     self.display_search_menu()
                 case 'Random concert':
-                    sg.popup(self.concerts_list[random.randrange(len(self.concerts_list))].return_concert_string(),
+                    sg.popup(self.concerts_list[random.randrange(len(self.concerts_list))].get_concert_long_string(),
                              title="Random Concert", line_width=100)
                 case 'Concerts':
                     self.display_all_concerts()
@@ -143,7 +149,7 @@ class GUI:
         with open('concerts.bin', 'wb') as concerts_file:
             pickle.dump(self.concerts_list, concerts_file)
 
-        sg.popup("The new concert was added to your memory", new_concert.return_concert_string())
+        sg.popup("The new concert was added to your memory", new_concert.get_concert_long_string())
 
     @classmethod
     def get_country(cls, city):
@@ -259,7 +265,7 @@ class GUI:
     def display_found(self, found_concerts):
         print_concerts_string = ''
         for concert in sorted(found_concerts, key=lambda c: c.date):
-            print_concerts_string += concert.return_concert_string() + '\n\n'
+            print_concerts_string += concert.get_concert_long_string() + '\n\n'
         layout = [[sg.Text(print_concerts_string)],
                   [sg.Button('Back'), sg.Stretch(), sg.Button('Change'), sg.Button('Remove')]]
 
@@ -315,7 +321,7 @@ class GUI:
         target_concert = None
         if len(concerts) > 1:
             layout = [[sg.Text("Please select a concert:")],
-                      *[[sg.Button(concert.print_concert_summary())]
+                      *[[sg.Button(concert.get_concert_summary())]
                         for concert in sorted(concerts, key=lambda c: c.date)]]
             window = sg.Window("Choose concert", layout, modal=True)
 
@@ -324,7 +330,7 @@ class GUI:
                 if event == sg.WIN_CLOSED:
                     break
                 for concert in concerts:
-                    if window[event].get_text() == concert.print_concert_summary():
+                    if window[event].get_text() == concert.get_concert_summary():
                         window.close()
                         target_concert = concert
             window.close()
@@ -382,7 +388,7 @@ class GUI:
         with open('concerts.bin', 'wb') as concerts_file:
             pickle.dump(self.concerts_list, concerts_file)
 
-        sg.popup("The concert was altered with the new facts:", altered_concert.return_concert_string(), line_width=100)
+        sg.popup("The concert was altered with the new facts:", altered_concert.get_concert_long_string(), line_width=100)
 
     def remove(self, concert):
         if self.is_sure(concert):
@@ -394,7 +400,7 @@ class GUI:
     @classmethod
     def is_sure(cls, concert):
         layout = [[sg.Text("Are you sure you want to remove this concert?:")],
-                  [sg.Text(concert.print_concert_summary())],
+                  [sg.Text(concert.get_concert_summary())],
                   [sg.Button("Yes, REMOVE"), sg.Button("No, cancel")]]
         window = sg.Window("Remove concert", layout, modal=True)
 
@@ -412,7 +418,7 @@ class GUI:
         all_concerts = ""
         try:
             for concert in sorted(self.concerts_list, key=lambda c: c.date):
-                all_concerts += concert.print_concert_summary() + "\n"
+                all_concerts += concert.get_concert_summary() + "\n"
         except TypeError:
             pass
 

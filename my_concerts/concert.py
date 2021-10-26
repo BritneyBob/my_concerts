@@ -21,7 +21,7 @@ class Concert:
 
         self.note = Note(note) if note else ""
 
-    def return_concert_string(self):
+    def get_concert_long_string(self):
         concert_string = ''
         try:
             date_artist_place_string = f"* {self.date.strftime('%Y-%m-%d')} you saw {self.artist.name} at " \
@@ -53,7 +53,7 @@ class Concert:
 
         return concert_string
 
-    def print_concert_summary(self):
+    def get_concert_summary(self):
         try:
             return f"* {self.date.strftime('%Y-%m-%d')}: {self.artist.name}, {self.venue.name} "
         except AttributeError:
