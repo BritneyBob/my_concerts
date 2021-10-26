@@ -1,5 +1,3 @@
-# TODO: Check where there needs to be back to main menu-buttons and fix that feature
-
 import pickle
 import random
 from fuzzywuzzy import fuzz
@@ -21,8 +19,8 @@ class GUI:
         else:
             self.concerts_list = []
 
-    # TODO: How to remove static method warning here and on row 146 (get_country())?
-    def get_saved_concerts(self):
+    @classmethod
+    def get_saved_concerts(cls):
         try:
             with open('concerts.bin', 'rb') as concerts_file:
                 saved_concerts = pickle.load(concerts_file)
@@ -147,7 +145,8 @@ class GUI:
 
         sg.popup("The new concert was added to your memory", new_concert.return_concert_string())
 
-    def get_country(self, city):
+    @classmethod
+    def get_country(cls, city):
         locator = Nominatim(user_agent="geoapiExercises")
         location = locator.geocode(city)
         regex = re.compile(r'[^,]*$')
@@ -155,11 +154,11 @@ class GUI:
 
     def display_search_menu(self):
         layout = [[sg.Text("Search"), sg.Input()],
-                   [sg.Radio("Artist", 'RADIO1', default=True, key="ARTIST"),
-                    sg.Radio("Venue", 'RADIO1', key="VENUE"),
-                    sg.Radio("Person", 'RADIO1', key="PERSON"),
-                    sg.Button("Search by date (new window)")],
-                   [sg.Stretch(), sg.Button('OK'), sg.Button('Back'), sg.Stretch()]]
+                  [sg.Radio("Artist", 'RADIO1', default=True, key="ARTIST"),
+                   sg.Radio("Venue", 'RADIO1', key="VENUE"),
+                   sg.Radio("Person", 'RADIO1', key="PERSON"),
+                   sg.Button("Search by date (new window)")],
+                  [sg.Stretch(), sg.Button('OK'), sg.Button('Back'), sg.Stretch()]]
         window = sg.Window("Search concert", layout, modal=True)
 
         while True:
@@ -277,7 +276,8 @@ class GUI:
                     self.choose_concert(found_concerts, "remove")
         window.close()
 
-    def display_not_found(self, sort_to_search, search_string):
+    @classmethod
+    def display_not_found(cls, sort_to_search, search_string):
         no_memory_string = ''
         match sort_to_search:
             case "artist":
@@ -389,10 +389,10 @@ class GUI:
             self.concerts_list.remove(concert)
             with open('concerts.bin', 'wb') as concerts_file:
                 pickle.dump(self.concerts_list, concerts_file)
-
             sg.popup("The chosen concert was removed.")
 
-    def is_sure(self, concert):
+    @classmethod
+    def is_sure(cls, concert):
         layout = [[sg.Text("Are you sure you want to remove this concert?:")],
                   [sg.Text(concert.print_concert_summary())],
                   [sg.Button("Yes, REMOVE"), sg.Button("No, cancel")]]
