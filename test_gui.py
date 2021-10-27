@@ -13,11 +13,12 @@ class TestGUI(unittest.TestCase):
         self.assertTrue(gui.concerts_list)
 
     def test_create_gui_without_concerts_file(self):
-        os.chdir(r"C:\Users\Britta\Desktop\YH\my_concerts\my_concerts\without_concerts")
+        os.chdir(r"C:\Users\Britta\Desktop\YH\my_concerts\without_concerts")
         gui = GUI()
         self.assertFalse(gui.concerts_list)
 
     def test_get_saved_concerts(self):
+        os.chdir(r"C:\Users\Britta\Desktop\YH\my_concerts")
         gui = GUI()
         with open("concerts.bin", "rb") as concerts_file:
             concerts = pickle.load(concerts_file)

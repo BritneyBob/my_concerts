@@ -453,4 +453,3 @@ class GUI:
         if artist.lower().startswith("the"):
             artist = artist[4:]
         return artist.lower()
-
