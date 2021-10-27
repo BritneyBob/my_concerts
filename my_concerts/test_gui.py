@@ -19,7 +19,7 @@ class TestGUI(unittest.TestCase):
 
     def test_get_saved_concerts(self):
         gui = GUI()
-        with open('concerts.bin', 'rb') as concerts_file:
+        with open("concerts.bin", "rb") as concerts_file:
             concerts = pickle.load(concerts_file)
         concert_strings = [concert.get_concert_long_string() for concert in concerts]
         saved_concert_strings = [concert.get_concert_long_string() for concert in gui.get_saved_concerts()]
@@ -54,5 +54,5 @@ class TestGUI(unittest.TestCase):
     #     pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
