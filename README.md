@@ -1,4 +1,4 @@
-# Repo for basic python programming assignment 
+# My Concerts - python programming assignment 
 Central repo for an assignment in the course 'Grundläggande programmering i Python', 
 which is the first part of the 2-year program 'Pythonutvecklare med inriktning AI' at 
 Teknikhögskolan in Gothenburg.
