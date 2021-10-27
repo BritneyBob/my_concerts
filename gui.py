@@ -324,7 +324,7 @@ class GUI:
         target_concert = None
         if len(concerts) > 1:
             layout = [[sg.Text("Please select a concert:")],
-                      *[[sg.Button(concert.get_concert_summary())]
+                      *[[sg.Button(str(concert))]
                         for concert in sorted(concerts, key=lambda c: c.date)]]
             window = sg.Window("Choose concert", layout, modal=True)
 
@@ -333,7 +333,7 @@ class GUI:
                 if event == sg.WIN_CLOSED:
                     break
                 for concert in concerts:
-                    if window[event].get_text() == concert.get_concert_summary():
+                    if window[event].get_text() == str(concert):
                         window.close()
                         target_concert = concert
             window.close()
@@ -404,7 +404,7 @@ class GUI:
     @classmethod
     def is_sure(cls, concert):
         layout = [[sg.Text("Are you sure you want to remove this concert?:")],
-                  [sg.Text(concert.get_concert_summary())],
+                  [sg.Text(str(concert))],
                   [sg.Button("Yes, REMOVE"), sg.Button("No, cancel")]]
         window = sg.Window("Remove concert", layout, modal=True)
 
@@ -422,7 +422,7 @@ class GUI:
         all_concerts = ""
         try:
             for concert in sorted(self.concerts_list, key=lambda c: c.date):
-                all_concerts += concert.get_concert_summary() + "\n"
+                all_concerts += str(concert) + "\n"
         except TypeError:
             pass
 

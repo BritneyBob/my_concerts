@@ -4,5 +4,5 @@ class Venue:
         self.city = city
         self.country = country
 
-    def venue_string(self):
+    def __str__(self):
         return f"{self.name} in {self.city}, {self.country}."

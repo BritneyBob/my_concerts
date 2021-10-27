@@ -26,9 +26,9 @@ class Concert:
         concert_string = ''
         try:
             date_artist_place_string = f"* {self.date.strftime('%Y-%m-%d')} you saw {self.artist.name} at " \
-                                       f"{self.venue.venue_string()}"
+                                       f"{str(self.venue)}"
         except AttributeError:
-            date_artist_place_string = f"* {self.date} you saw {self.artist.name} at {self.venue.venue_string()}"
+            date_artist_place_string = f"* {self.date} you saw {self.artist.name} at {str(self.venue)}"
 
         if self.persons:
             person_string = f"  You were there with "
@@ -48,13 +48,13 @@ class Concert:
 
         try:
             if self.note:
-                concert_string += "\n" + self.note.note_string()
+                concert_string += "\n" + str(self.note)
         except AttributeError:
             pass
 
         return concert_string
 
-    def get_concert_summary(self):
+    def __str__(self):
         try:
             return f"* {self.date.strftime('%Y-%m-%d')}: {self.artist.name}, {self.venue.name} "
         except AttributeError:
