@@ -1,5 +1,6 @@
 import pickle
 import random
+from collections import Counter
 from fuzzywuzzy import fuzz
 from datetime import datetime
 from dateparser import parse
@@ -98,11 +99,11 @@ class GUI:
                 case "Concerts":
                     self.display_all_concerts()
                 case "Artists":
-                    self.display_all("artists", "All artists you have seen:")
+                    self.display_all("artists", "Number of concerts you have been to with each artist:")
                 case "Venues":
-                    self.display_all("venues", "All venues you have been to concerts in:")
+                    self.display_all("venues", "Number of concerts you have been to at each venue:")
                 case "Persons":
-                    self.display_all("persons", "All persons you have been to concerts with:")
+                    self.display_all("persons", "Number of concerts you have been to together with each person:")
         window.close()
 
     def display_add_menu(self):
@@ -440,7 +441,16 @@ class GUI:
                     except TypeError:
                         pass
         all_items_string = ""
-        for x in sorted(list(set(all_items)), key=str.casefold):
-            all_items_string += "* " + x + "\n"
+        frequencies = list(Counter(all_items).items())
+        for item_count in sorted(frequencies, key=self.sort_ignore_case_and_the):
+            all_items_string += f"* {item_count[0]}: {item_count[1]}\n"
 
         sg.popup(title, all_items_string, line_width=100)
+
+    @classmethod
+    def sort_ignore_case_and_the(cls, frequency):
+        artist = frequency[0]
+        if artist.lower().startswith("the"):
+            artist = artist[4:]
+        return artist.lower()
+
