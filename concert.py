@@ -1,8 +1,9 @@
-from artist import Artist
-from venue import Venue
 from dateparser import parse
-from person import Person
+
+from artist import Artist
 from note import Note
+from person import Person
+from venue import Venue
 
 
 class Concert:

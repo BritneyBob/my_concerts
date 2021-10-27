@@ -1,9 +1,11 @@
 import os
 import pickle
-from datetime import datetime, timedelta
 import unittest
-from gui import GUI
+
+from datetime import datetime, timedelta
+
 from concert import Concert
+from gui import GUI
 
 
 class TestGUI(unittest.TestCase):

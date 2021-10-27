@@ -1,14 +1,16 @@
-import pickle
-import random
 from collections import Counter
-from fuzzywuzzy import fuzz
+import pickle
+from os.path import exists
+import random
+import re
+
 from datetime import datetime
 from dateparser import parse
-from os.path import exists
-import PySimpleGUI as sg
+from fuzzywuzzy import fuzz
 from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut
-import re
+import PySimpleGUI as sg
+
 from concert import Concert
 
 
