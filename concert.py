@@ -1,50 +1,61 @@
-from artist import Artist
-from venue import Venue
 from dateparser import parse
-from person import Person
+
+from artist import Artist
 from note import Note
-from terminal_color import color_print
+from person import Person
+from venue import Venue
 
 
 class Concert:
     def __init__(self, artist, venue, date, persons, note):
         self.artist = Artist(artist)
 
-        if isinstance(venue, str):
-            self.venue = Venue(venue)
-        elif isinstance(venue, tuple):
-            venue_name, city, country = venue
-            self.venue = Venue(venue_name, city, country)
+        venue_name, city, country = venue
+        self.venue = Venue(venue_name, city, country)
 
         self.date = parse(date)
 
-        self.persons = []
-        if persons[0].lower() != 'no':
-            for person in persons:
-                self.persons.append(Person(person))
+        if len(persons) > 0:
+            self.persons = [Person(person) for person in persons]
+        else:
+            self.persons = None
 
-        self.note = Note(note)
+        self.note = Note(note) if note else ""
 
-    def print_concert(self):
-        color_print('blue', f"* {self.date.strftime('%Y-%m-%d')} you saw {self.artist.name} at {self.venue.name} in {self.venue.city}, "
-                            f"{self.venue.country}.")
+    def get_concert_long_string(self):
+        concert_string = ''
+        try:
+            date_artist_place_string = f"* {self.date.strftime('%Y-%m-%d')} you saw {self.artist.name} at " \
+                                       f"{str(self.venue)}"
+        except AttributeError:
+            date_artist_place_string = f"* {self.date} you saw {self.artist.name} at {str(self.venue)}"
 
-        if len(self.persons) > 0:
-            color_print('blue', f"  You were there with ", end='')
+        if self.persons:
+            person_string = f"  You were there with "
             for i, person in enumerate(self.persons):
                 if len(self.persons) == 1:
-                    color_print('blue', f'{person.first_name}.', end='')
+                    person_string += f"{person.first_name}."
                 elif i == len(self.persons) - 2:
-                    color_print('blue', f'{person.first_name}', end=' ')
+                    person_string += f"{person.first_name} "
                 elif i == len(self.persons) - 1:
-                    color_print('blue', f'and {person.first_name}.', end='')
+                    person_string += f"and {person.first_name}."
                 else:
-                    color_print('blue', f"{person.first_name}, ", end='')
+                    person_string += f"{person.first_name}, "
 
-        if len(self.note.note) > 0:
-            if len(self.note.note) > 165:
-                color_print('cyan', f"\n  Notes: {self.note.note[:165]}")
-                color_print('cyan', f"  {self.note.note[165:]}")
-            else:
-                color_print('cyan', f"\n  Notes: {self.note.note}")
-        print()
+            concert_string += date_artist_place_string + "\n" + person_string
+        else:
+            concert_string += date_artist_place_string
+
+        try:
+            if self.note:
+                concert_string += "\n" + str(self.note)
+        except AttributeError:
+            pass
+
+        return concert_string
+
+    def __str__(self):
+        try:
+            return f"* {self.date.strftime('%Y-%m-%d')}: {self.artist.name}, {self.venue.name} "
+        except AttributeError:
+            return f"* {self.date}: {self.artist.name}, {self.venue.name} "

@@ -4,5 +4,3 @@ class Person:
         self.relation = relation
         self.last_name = last_name
         self.nickname = nickname
-
-
