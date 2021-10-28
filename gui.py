@@ -53,19 +53,19 @@ class GUI:
                              title="Random Concert", line_width=100)
 
                 case "Concerts":
-                    all_concerts = concerts_list_ops(self.concerts_list)
+                    all_concerts = concerts_list_ops.get_all_concerts(self.concerts_list)
                     sg.popup("All concerts you have seen:", all_concerts, line_width=100)
 
                 case "Artists":
-                    all_artists = concerts_list_ops("artists", self.concerts_list)
+                    all_artists = concerts_list_ops.get_all_items("artists", self.concerts_list)
                     sg.popup("Number of concerts you have been to with each artist:", all_artists, line_width=100)
 
                 case "Venues":
-                    all_venues = concerts_list_ops("venues", self.concerts_list)
+                    all_venues = concerts_list_ops.get_all_items("venues", self.concerts_list)
                     sg.popup("Number of concerts you have been to at each venue:", all_venues, line_width=100)
 
                 case "Persons":
-                    all_persons = concerts_list_ops("persons", self.concerts_list)
+                    all_persons = concerts_list_ops.get_all_items("persons", self.concerts_list)
                     sg.popup("Number of concerts you have been to together with each person:", all_persons,
                              line_width=100)
         window.close()
