@@ -130,6 +130,8 @@ class GUI:
                     values = self.display_date_search_menu()
                     found_concerts, search_string, two_dates = \
                         concerts_list_ops.get_search_result_date(values, self.concerts_list)
+                    if two_dates:
+                        search_string = values
 
             if len(found_concerts) > 0:
                 self.display_found(found_concerts)
@@ -138,7 +140,8 @@ class GUI:
 
         window.close()
 
-    def display_date_search_menu(self):
+    @classmethod
+    def display_date_search_menu(cls):
         layout = [[sg.Text("Enter a specific date here...")],
                   [sg.Stretch(), sg.Text("Date  "), sg.Input()],
                   [sg.Text("...or enter two dates for a search between a range of dates here")],
@@ -159,21 +162,20 @@ class GUI:
                     if values[0]:
                         try:
                             parse(values[0])
-                            #self.display_search_result("date", values)
+                            window.close()
+                            return values
                         except AttributeError:
                             sg.popup(incorrect_string)
                     elif values[1] and values[2]:
                         try:
                             date1 = parse(values[1], settings={"PREFER_DAY_OF_MONTH": "first"})
                             date2 = parse(values[2], settings={"PREFER_DAY_OF_MONTH": "last"})
-                            #self.display_search_result("date", (date1, date2))
-                            break
+                            window.close()
+                            return date1, date2
                         except AttributeError:
                             sg.popup(incorrect_string)
                     else:
                         sg.popup("Please enter one or two dates")
-        window.close()
-        return values
 
     def display_found(self, found_concerts):
         print_concerts_string = ''
