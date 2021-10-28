@@ -1,7 +1,6 @@
 import random
 
 from dateparser import parse
-from fuzzywuzzy import fuzz
 import PySimpleGUI as sg
 
 import concerts_list_ops
@@ -105,6 +104,11 @@ class GUI:
                   [sg.Stretch(), sg.Button("OK"), sg.Button("Back"), sg.Stretch()]]
         window = sg.Window("Search concert", layout, modal=True)
 
+        search = ""
+        search_string = ""
+        found_concerts = []
+        two_dates = False
+
         while True:
             event, values = window.read()
             match event:
@@ -112,20 +116,29 @@ class GUI:
                     break
                 case "OK":
                     if values["ARTIST"]:
-                        self.display_search_result("artist", values)
-                        break
+                        search = "artist"
                     elif values["VENUE"]:
-                        self.display_search_result("venue", values)
-                        break
+                        search = "Venue"
                     elif values["PERSON"]:
-                        self.display_search_result("person", values)
-                        break
+                        search = "Person"
+
+                    found_concerts, search_string = \
+                        concerts_list_ops.get_search_result(search, values, self.concerts_list)
+
                 case "Search by date (new window)":
-                    self.display_date_search()
-                    break
+                    search = "date"
+                    values = self.display_date_search_menu()
+                    found_concerts, search_string, two_dates = \
+                        concerts_list_ops.get_search_result_date(values, self.concerts_list)
+
+            if len(found_concerts) > 0:
+                self.display_found(found_concerts)
+            else:
+                self.display_not_found(search, search_string)
+
         window.close()
 
-    def display_date_search(self):
+    def display_date_search_menu(self):
         layout = [[sg.Text("Enter a specific date here...")],
                   [sg.Stretch(), sg.Text("Date  "), sg.Input()],
                   [sg.Text("...or enter two dates for a search between a range of dates here")],
@@ -146,59 +159,21 @@ class GUI:
                     if values[0]:
                         try:
                             parse(values[0])
-                            self.display_search_result("date", values)
+                            #self.display_search_result("date", values)
                         except AttributeError:
                             sg.popup(incorrect_string)
                     elif values[1] and values[2]:
                         try:
                             date1 = parse(values[1], settings={"PREFER_DAY_OF_MONTH": "first"})
                             date2 = parse(values[2], settings={"PREFER_DAY_OF_MONTH": "last"})
-                            self.display_search_result("date", (date1, date2))
+                            #self.display_search_result("date", (date1, date2))
                             break
                         except AttributeError:
                             sg.popup(incorrect_string)
                     else:
                         sg.popup("Please enter one or two dates")
         window.close()
-
-    def display_search_result(self, search, values):
-        found_concerts = []
-        search_string = values[0]
-        two_dates = False
-
-        for concert in self.concerts_list:
-            match search:
-                case "artist":
-                    if fuzz.ratio(search_string.lower(), concert.artist.name.lower()) > 90 or \
-                            fuzz.partial_ratio(search_string.lower(), concert.artist.name.lower()) > 95:
-                        found_concerts.append(concert)
-
-                case "venue":
-                    if fuzz.ratio(search_string.lower(), concert.venue.name.lower()) > 90:
-                        found_concerts.append(concert)
-
-                case "date":
-                    if isinstance(values, tuple):
-                        two_dates = True
-                        if values[0] <= concert.date <= values[1]:
-                            found_concerts.append(concert)
-                    else:
-                        if parse(search_string) == concert.date:
-                            found_concerts.append(concert)
-
-                case "person":
-                    for saved_person in concert.persons:
-                        if fuzz.ratio(search_string.lower(), saved_person.first_name) > 90 or \
-                                fuzz.partial_ratio(search_string.lower(), saved_person.first_name.lower()) > 95:
-                            found_concerts.append(concert)
-
-        if len(found_concerts) > 0:
-            self.display_found(found_concerts)
-        else:
-            if two_dates:
-                self.display_not_found(search, (values[0], values[1]))
-            else:
-                self.display_not_found(search, search_string)
+        return values
 
     def display_found(self, found_concerts):
         print_concerts_string = ''

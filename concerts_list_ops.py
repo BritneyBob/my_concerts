@@ -4,7 +4,9 @@ import pickle
 import random
 import re
 
+from dateparser import parse
 from datetime import datetime
+from fuzzywuzzy import fuzz
 from geopy.exc import GeocoderTimedOut
 from geopy.geocoders import Nominatim
 
@@ -79,6 +81,46 @@ def add_concert(values, concerts_list):
         pickle.dump(concerts_list, concerts_file)
 
     return new_concert, concerts_list
+
+
+def get_search_result(search, values, concerts_list):
+    found_concerts = []
+    search_string = values[0]
+
+    for concert in concerts_list:
+        match search:
+            case "artist":
+                if fuzz.ratio(search_string.lower(), concert.artist.name.lower()) > 90 or \
+                        fuzz.partial_ratio(search_string.lower(), concert.artist.name.lower()) > 95:
+                    found_concerts.append(concert)
+
+            case "venue":
+                if fuzz.ratio(search_string.lower(), concert.venue.name.lower()) > 90:
+                    found_concerts.append(concert)
+
+            case "person":
+                for saved_person in concert.persons:
+                    if fuzz.ratio(search_string.lower(), saved_person.first_name) > 90 or \
+                            fuzz.partial_ratio(search_string.lower(), saved_person.first_name.lower()) > 95:
+                        found_concerts.append(concert)
+
+    return found_concerts, search_string
+
+
+def get_search_result_date(values, concerts_list):
+    found_concerts = []
+    search_string = values[0]
+    two_dates = False
+    for concert in concerts_list:
+        if isinstance(values, tuple):
+            two_dates = True
+            if values[0] <= concert.date <= values[1]:
+                found_concerts.append(concert)
+        else:
+            if parse(search_string) == concert.date:
+                found_concerts.append(concert)
+
+    return found_concerts, search_string, two_dates
 
 
 def change(values, concert, concerts_list):
