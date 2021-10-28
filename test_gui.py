@@ -66,14 +66,26 @@ class TestGUI(unittest.TestCase):
     # def test_add_concert(self):
     #     pass
     #
-    # def test_get_country(self):
-    #     pass
-    #
+    def test_get_country_swedish(self):
+        gui = GUI()
+        self.assertEqual("Sverige", gui.get_country("Göteborg"))
+
+    def test_get_country_english(self):
+        gui = GUI()
+        self.assertEqual("Sverige", gui.get_country("Gothenburg"))
+
     # def test_change(self):
     #     pass
-    #
+
     # def test_remove(self):
-    #     pass
+    #     gui = GUI()
+    #     concerts = []
+    #     concert = Concert("Dipper", ("Musikens Hus", "Göteborg", "Sweden"), datetime.now().strftime("%Y-%m-%d"), [], "")
+    #     concerts.append(concert)
+    #     with open("test_concert.bin", "wb") as concert_file:
+    #         pickle.dump(concerts, concert_file)
+    #     gui.remove(concert)
+    #     self.assertFalse(concerts)
 
 
 if __name__ == "__main__":

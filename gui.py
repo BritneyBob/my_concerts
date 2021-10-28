@@ -1,76 +1,24 @@
-from collections import Counter
-import pickle
-from os.path import exists
 import random
-import re
 
-from datetime import datetime
 from dateparser import parse
 from fuzzywuzzy import fuzz
-from geopy.geocoders import Nominatim
-from geopy.exc import GeocoderTimedOut
 import PySimpleGUI as sg
 
-from concert import Concert
+import concerts_list_ops
 
 
 class GUI:
     def __init__(self):
         self.running = True
-        if exists("concerts.bin"):
-            self.concerts_list = self.get_saved_concerts()
-        else:
-            self.concerts_list = []
+        self.concerts_list = concerts_list_ops.get_saved_concerts()
 
-    @classmethod
-    def get_saved_concerts(cls):
-        try:
-            with open("concerts.bin", "rb") as concerts_file:
-                saved_concerts = pickle.load(concerts_file)
-                return saved_concerts
-        except EOFError:
-            return []
-
-    def run(self):
-        window = self.display_menu()
+    def run_window(self):
+        random_concert_to_display = concerts_list_ops.get_random_concert_string(self.concerts_list)
+        window = self.display_main_menu(random_concert_to_display)
         self.process_user_click(window)
 
-    def get_random_concert_prev_year_this_month(self):
-        current_month = datetime.now().month
-        concerts_this_month_prev_years = []
-
-        for concert in self.concerts_list:
-            try:
-                if current_month == concert.date.month:
-                    concerts_this_month_prev_years.append(concert)
-            except AttributeError:
-                pass
-
-        if len(concerts_this_month_prev_years) == 0:
-            return None
-
-        return concerts_this_month_prev_years[random.randrange(len(concerts_this_month_prev_years))]
-
-    @classmethod
-    def get_remember_concert_string(cls, concert_to_print):
-        years_since_concert = datetime.now().year - concert_to_print.date.year
-        remind_string = ''
-
-        match years_since_concert:
-            case 0:
-                remind_string += f"RECENTLY...\n"
-            case 1:
-                remind_string += f"1 YEAR AGO...\n"
-            case _:
-                remind_string += f"{years_since_concert} YEARS AGO...\n"
-        concert_string = concert_to_print.get_concert_long_string()
-
-        return remind_string + concert_string
-
-    def display_menu(self):
+    def display_main_menu(self, concert_to_remind_of_string):
         if len(self.concerts_list) > 0:
-            random_concert_prev_year_this_month = self.get_random_concert_prev_year_this_month()
-            concert_to_remind_of_string = self.get_remember_concert_string(random_concert_prev_year_this_month)
             welcome_string = "Welcome! My Concerts helps you remember the concerts you have been to.\n\n" + \
                              concert_to_remind_of_string + "\n"
         else:
@@ -88,24 +36,38 @@ class GUI:
     def process_user_click(self, window):
         while True:
             event, values = window.read()
+
             match event:
                 case sg.WIN_CLOSED | "Quit":
                     break
+
                 case "Add concert":
-                    self.display_add_menu()
+                    new_concert, self.concerts_list = self.display_add_menu()
+                    sg.popup("The new concert was added to your memory", new_concert.get_concert_long_string())
+
                 case "Search for concert":
                     self.display_search_menu()
+
                 case "Random concert":
                     sg.popup(self.concerts_list[random.randrange(len(self.concerts_list))].get_concert_long_string(),
                              title="Random Concert", line_width=100)
+
                 case "Concerts":
-                    self.display_all_concerts()
+                    all_concerts = concerts_list_ops(self.concerts_list)
+                    sg.popup("All concerts you have seen:", all_concerts, line_width=100)
+
                 case "Artists":
-                    self.display_all("artists", "Number of concerts you have been to with each artist:")
+                    all_artists = concerts_list_ops("artists", self.concerts_list)
+                    sg.popup("Number of concerts you have been to with each artist:", all_artists, line_width=100)
+
                 case "Venues":
-                    self.display_all("venues", "Number of concerts you have been to at each venue:")
+                    all_venues = concerts_list_ops("venues", self.concerts_list)
+                    sg.popup("Number of concerts you have been to at each venue:", all_venues, line_width=100)
+
                 case "Persons":
-                    self.display_all("persons", "Number of concerts you have been to together with each person:")
+                    all_persons = concerts_list_ops("persons", self.concerts_list)
+                    sg.popup("Number of concerts you have been to together with each person:", all_persons,
+                             line_width=100)
         window.close()
 
     def display_add_menu(self):
@@ -127,39 +89,12 @@ class GUI:
                     if values[0] and values[1] and values[2] and values[3]:
                         try:
                             parse(values[3]).strftime("%Y-%m-%d")
-                            self.add_concert(values)
-                            break
+                            return concerts_list_ops.add_concert(values, self.concerts_list)
                         except AttributeError:
                             sg.popup("Incorrect date input", "Please enter date in another format")
                     else:
                         sg.popup("Please enter artist, venue, city and date")
         window.close()
-
-    def add_concert(self, values):
-        try:
-            country = self.get_country(values[2])
-        except GeocoderTimedOut:
-            country = "Country couldn't be fetched due to a time out error"
-
-        artist = values[0]
-        venue = (values[1], values[2], country)
-        date = values[3]
-        persons = values[4].split(', ') if values[4] != '' else []
-        note = values[5]
-
-        new_concert = Concert(artist, venue, date, persons, note)
-        self.concerts_list.append(new_concert)
-        with open("concerts.bin", "wb") as concerts_file:
-            pickle.dump(self.concerts_list, concerts_file)
-
-        sg.popup("The new concert was added to your memory", new_concert.get_concert_long_string())
-
-    @classmethod
-    def get_country(cls, city):
-        locator = Nominatim(user_agent="geoapiExercises")
-        location = locator.geocode(city)
-        regex = re.compile(r"[^,]*$")
-        return regex.findall(location.raw["display_name"])[0].lstrip()
 
     def display_search_menu(self):
         layout = [[sg.Text("Search"), sg.Input()],
@@ -186,11 +121,11 @@ class GUI:
                         self.display_search_result("person", values)
                         break
                 case "Search by date (new window)":
-                    self.date_search()
+                    self.display_date_search()
                     break
         window.close()
 
-    def date_search(self):
+    def display_date_search(self):
         layout = [[sg.Text("Enter a specific date here...")],
                   [sg.Stretch(), sg.Text("Date  "), sg.Input()],
                   [sg.Text("...or enter two dates for a search between a range of dates here")],
@@ -280,9 +215,9 @@ class GUI:
                 case sg.WIN_CLOSED | "Back":
                     break
                 case "Change":
-                    self.choose_concert(found_concerts, "change")
+                    self.display_choose_concert(found_concerts, "change")
                 case "Remove":
-                    self.choose_concert(found_concerts, "remove")
+                    self.display_choose_concert(found_concerts, "remove")
         window.close()
 
     @classmethod
@@ -320,34 +255,36 @@ class GUI:
                 break
         window.close()
 
-    def choose_concert(self, concerts, change_or_remove):
+    def display_choose_concert(self, found_concerts, change_or_remove):
         target_concert = None
-        if len(concerts) > 1:
+        if len(found_concerts) > 1:
             layout = [[sg.Text("Please select a concert:")],
                       *[[sg.Button(str(concert))]
-                        for concert in sorted(concerts, key=lambda c: c.date)]]
+                        for concert in sorted(found_concerts, key=lambda c: c.date)]]
             window = sg.Window("Choose concert", layout, modal=True)
 
             while True:
                 event, values = window.read()
                 if event == sg.WIN_CLOSED:
                     break
-                for concert in concerts:
+                for concert in found_concerts:
                     if window[event].get_text() == str(concert):
                         window.close()
                         target_concert = concert
             window.close()
 
         else:
-            target_concert = concerts[0]
+            target_concert = found_concerts[0]
 
         if target_concert:
             if change_or_remove == "change":
-                self.facts_to_change(target_concert)
+                self.display_change(target_concert)
             elif change_or_remove == "remove":
-                self.remove(target_concert)
+                if self.display_is_sure(target_concert):
+                    sg.popup("The chosen concert was removed.")
+                    self.concerts_list = concerts_list_ops.remove(target_concert, self.concerts_list)
 
-    def facts_to_change(self, concert):
+    def display_change(self, concert):
         try:
             persons_list = [person.first_name for person in concert.persons]
         except TypeError:
@@ -373,36 +310,13 @@ class GUI:
                     break
                 case "OK":
                     window.close()
-                    self.change(values, concert)
+                    changed_concert, self.concerts_list = concerts_list_ops.change(values, concert, self.concerts_list)
+                    sg.popup("The concert was altered with the new facts:", changed_concert.get_concert_long_string(),
+                             line_width=100)
         window.close()
 
-    def change(self, values, concert):
-        artist = values[0]
-        venue = values[1]
-        city = values[2]
-        country = values[3]
-        date = values[4]
-        persons = values[5].split(", ") if values[5] != "" else []
-        note = values[6]
-
-        altered_concert = Concert(artist, (venue, city, country), date, persons, note)
-        self.concerts_list.append(altered_concert)
-        self.concerts_list.remove(concert)
-        with open("concerts.bin", "wb") as concerts_file:
-            pickle.dump(self.concerts_list, concerts_file)
-
-        sg.popup("The concert was altered with the new facts:", altered_concert.get_concert_long_string(),
-                 line_width=100)
-
-    def remove(self, concert):
-        if self.is_sure(concert):
-            self.concerts_list.remove(concert)
-            with open("concerts.bin", "wb") as concerts_file:
-                pickle.dump(self.concerts_list, concerts_file)
-            sg.popup("The chosen concert was removed.")
-
     @classmethod
-    def is_sure(cls, concert):
+    def display_is_sure(cls, concert):
         layout = [[sg.Text("Are you sure you want to remove this concert?:")],
                   [sg.Text(str(concert))],
                   [sg.Button("Yes, REMOVE"), sg.Button("No, cancel")]]
@@ -417,41 +331,3 @@ class GUI:
                     window.close()
                     return True
         window.close()
-
-    def display_all_concerts(self):
-        all_concerts = ""
-        try:
-            for concert in sorted(self.concerts_list, key=lambda c: c.date):
-                all_concerts += str(concert) + "\n"
-        except TypeError:
-            pass
-
-        sg.popup("All concerts you have seen:", all_concerts, line_width=100)
-
-    def display_all(self, items, title):
-        all_items = []
-        for concert in self.concerts_list:
-            match items:
-                case "artists":
-                    all_items.append(concert.artist.name)
-                case "venues":
-                    all_items.append(concert.venue.name)
-                case "persons":
-                    try:
-                        for person in concert.persons:
-                            all_items.append(person.first_name)
-                    except TypeError:
-                        pass
-        all_items_string = ""
-        frequencies = list(Counter(all_items).items())
-        for item_count in sorted(frequencies, key=self.sort_ignore_case_and_the):
-            all_items_string += f"* {item_count[0]}: {item_count[1]}\n"
-
-        sg.popup(title, all_items_string, line_width=100)
-
-    @classmethod
-    def sort_ignore_case_and_the(cls, frequency):
-        artist = frequency[0]
-        if artist.lower().startswith("the"):
-            artist = artist[4:]
-        return artist.lower()
