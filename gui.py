@@ -28,9 +28,8 @@ class GUI:
                   [sg.Text("SEE ALL:"), sg.Button("Concerts"), sg.Button("Artists"), sg.Button("Venues"),
                    sg.Button("Persons")],
                   [sg.Stretch(), sg.Button("Quit")]]
-        window = sg.Window("My Concerts", layout)
 
-        return window
+        return sg.Window("My Concerts", layout)
 
     def process_user_click(self, window):
         while True:
@@ -84,6 +83,7 @@ class GUI:
             match event:
                 case sg.WIN_CLOSED | "Back":
                     break
+
                 case "OK":
                     if values[0] and values[1] and values[2] and values[3]:
                         try:
@@ -91,6 +91,7 @@ class GUI:
                             return concerts_list_ops.add_concert(values, self.concerts_list)
                         except AttributeError:
                             sg.popup("Incorrect date input", "Please enter date in another format")
+
                     else:
                         sg.popup("Please enter artist, venue, city and date")
         window.close()
@@ -102,28 +103,23 @@ class GUI:
                    sg.Radio("Person", 'RADIO1', key="PERSON"),
                    sg.Button("Search by date (new window)")],
                   [sg.Stretch(), sg.Button("OK"), sg.Button("Back"), sg.Stretch()]]
+
         window = sg.Window("Search concert", layout, modal=True)
 
         search = ""
         search_string = ""
         found_concerts = []
-        two_dates = False
 
         while True:
-            event, values = window.read()
+            event, window_values = window.read()
             match event:
                 case sg.WIN_CLOSED | "Back":
                     break
-                case "OK":
-                    if values["ARTIST"]:
-                        search = "artist"
-                    elif values["VENUE"]:
-                        search = "Venue"
-                    elif values["PERSON"]:
-                        search = "Person"
 
+                case "OK":
+                    search = list(window_values.keys())[list(window_values.values()).index(True)].lower()
                     found_concerts, search_string = \
-                        concerts_list_ops.get_search_result(search, values, self.concerts_list)
+                        concerts_list_ops.get_search_result(search, window_values, self.concerts_list)
 
                 case "Search by date (new window)":
                     search = "date"
@@ -158,6 +154,7 @@ class GUI:
             match event:
                 case sg.WIN_CLOSED | "Back":
                     break
+
                 case "OK":
                     if values[0]:
                         try:
@@ -166,6 +163,7 @@ class GUI:
                             return values
                         except AttributeError:
                             sg.popup(incorrect_string)
+
                     elif values[1] and values[2]:
                         try:
                             date1 = parse(values[1], settings={"PREFER_DAY_OF_MONTH": "first"})
@@ -174,6 +172,7 @@ class GUI:
                             return date1, date2
                         except AttributeError:
                             sg.popup(incorrect_string)
+
                     else:
                         sg.popup("Please enter one or two dates")
 
@@ -204,6 +203,7 @@ class GUI:
             case "artist":
                 no_memory_string = f"Unfortunately you have no recollection of a concert with the artist " \
                                    f"{search_string}."
+
             case "venue":
                 no_memory_string = f"Unfortunately you have no recollection of a concert at the venue {search_string}."
 
@@ -226,6 +226,7 @@ class GUI:
                   [sg.Button("OK")]]
 
         window = sg.Window("Not found", layout, modal=True)
+
         while True:
             event, values = window.read()
             if event in (sg.WIN_CLOSED, "OK"):
@@ -234,6 +235,7 @@ class GUI:
 
     def display_choose_concert(self, found_concerts, change_or_remove):
         target_concert = None
+
         if len(found_concerts) > 1:
             layout = [[sg.Text("Please select a concert:")],
                       *[[sg.Button(str(concert))]
@@ -244,6 +246,7 @@ class GUI:
                 event, values = window.read()
                 if event == sg.WIN_CLOSED:
                     break
+
                 for concert in found_concerts:
                     if window[event].get_text() == str(concert):
                         window.close()
@@ -256,6 +259,7 @@ class GUI:
         if target_concert:
             if change_or_remove == "change":
                 self.display_change(target_concert)
+
             elif change_or_remove == "remove":
                 if self.display_is_sure(target_concert):
                     sg.popup("The chosen concert was removed.")
@@ -270,6 +274,7 @@ class GUI:
             note = concert.note.note
         except AttributeError:
             note = ""
+
         layout = [[sg.Text("Artist"), sg.Input(concert.artist.name)],
                   [sg.Text("Venue"), sg.Input(concert.venue.name)],
                   [sg.Text("City"), sg.Input(concert.venue.city)],
@@ -278,6 +283,7 @@ class GUI:
                   [sg.Text("Person/s you went with"), sg.Multiline(", ".join(persons_list))],
                   [sg.Text("Note"), sg.Multiline(note)],
                   [sg.Button("OK"), sg.Button("Back")]]
+
         window = sg.Window("Change concert", layout, element_justification="r", modal=True)
 
         while True:
@@ -285,6 +291,7 @@ class GUI:
             match event:
                 case sg.WIN_CLOSED | "Back":
                     break
+
                 case "OK":
                     window.close()
                     changed_concert, self.concerts_list = concerts_list_ops.change(values, concert, self.concerts_list)
@@ -297,6 +304,7 @@ class GUI:
         layout = [[sg.Text("Are you sure you want to remove this concert?:")],
                   [sg.Text(str(concert))],
                   [sg.Button("Yes, REMOVE"), sg.Button("No, cancel")]]
+
         window = sg.Window("Remove concert", layout, modal=True)
 
         while True:
