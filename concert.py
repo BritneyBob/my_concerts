@@ -1,8 +1,6 @@
 from dateparser import parse
 
-from artist import Artist
 from note import Note
-from person import Person
 from venue import Venue
 
 
