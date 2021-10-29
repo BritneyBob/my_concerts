@@ -13,9 +13,9 @@ from geopy.geocoders import Nominatim
 from concert import Concert
 
 
-def get_saved_concerts():
-    if exists("concerts.bin"):
-        with open("concerts.bin", "rb") as concerts_file:
+def get_saved_concerts(concerts_filename):
+    if exists(concerts_filename):
+        with open(concerts_filename, "rb") as concerts_file:
             saved_concerts = pickle.load(concerts_file)
             return saved_concerts
     else:
@@ -63,7 +63,7 @@ def get_country(city):
     return regex.findall(location.raw["display_name"])[0].lstrip()
 
 
-def add_concert(values, concerts_list):
+def add_concert(values, concerts_list, concerts_filename):
     try:
         country = get_country(values[2])
     except GeocoderTimedOut:
@@ -77,7 +77,7 @@ def add_concert(values, concerts_list):
 
     new_concert = Concert(artist, venue, date, persons, note)
     concerts_list.append(new_concert)
-    with open("concerts.bin", "wb") as concerts_file:
+    with open(concerts_filename, "wb") as concerts_file:
         pickle.dump(concerts_list, concerts_file)
 
     return new_concert, concerts_list
@@ -90,8 +90,8 @@ def get_search_result(search, values, concerts_list):
     for concert in concerts_list:
         match search:
             case "artist":
-                if fuzz.ratio(search_string.lower(), concert.artist.name.lower()) > 90 or \
-                        fuzz.partial_ratio(search_string.lower(), concert.artist.name.lower()) > 95:
+                if fuzz.ratio(search_string.lower(), concert.artist.lower()) > 90 or \
+                        fuzz.partial_ratio(search_string.lower(), concert.artist.lower()) > 95:
                     found_concerts.append(concert)
 
             case "venue":
@@ -100,8 +100,8 @@ def get_search_result(search, values, concerts_list):
 
             case "person":
                 for saved_person in concert.persons:
-                    if fuzz.ratio(search_string.lower(), saved_person.first_name) > 90 or \
-                            fuzz.partial_ratio(search_string.lower(), saved_person.first_name.lower()) > 95:
+                    if fuzz.ratio(search_string.lower(), saved_person) > 90 or \
+                            fuzz.partial_ratio(search_string.lower(), saved_person.lower()) > 95:
                         found_concerts.append(concert)
 
     return found_concerts, search_string
@@ -123,7 +123,7 @@ def get_search_result_date(values, concerts_list):
     return found_concerts, search_string, two_dates
 
 
-def change(values, concert, concerts_list):
+def change(values, concert, concerts_list, concerts_filename):
     artist = values[0]
     venue = values[1]
     city = values[2]
@@ -136,16 +136,16 @@ def change(values, concert, concerts_list):
     concerts_list.append(changed_concert)
     concerts_list.remove(concert)
 
-    with open("concerts.bin", "wb") as concerts_file:
+    with open(concerts_filename, "wb") as concerts_file:
         pickle.dump(concerts_list, concerts_file)
 
     return changed_concert, concerts_list
 
 
-def remove(concert, concerts_list):
+def remove(concert, concerts_list, concerts_filename):
     concerts_list.remove(concert)
 
-    with open("concerts.bin", "wb") as concerts_file:
+    with open(concerts_filename, "wb") as concerts_file:
         pickle.dump(concerts_list, concerts_file)
 
     return concerts_list
@@ -167,13 +167,13 @@ def get_all_items(items, concerts_list):
     for concert in concerts_list:
         match items:
             case "artists":
-                all_items.append(concert.artist.name)
+                all_items.append(concert.artist)
             case "venues":
                 all_items.append(concert.venue.name)
             case "persons":
                 try:
                     for person in concert.persons:
-                        all_items.append(person.first_name)
+                        all_items.append(person)
                 except TypeError:
                     pass
     all_items_string = ""

@@ -3,16 +3,17 @@ import random
 from dateparser import parse
 import PySimpleGUI as sg
 
-import concerts_list_ops
+import concerts_operations
 
 
 class GUI:
     def __init__(self):
         self.running = True
-        self.concerts_list = concerts_list_ops.get_saved_concerts()
+        self.concerts_file = "concerts.bin"
+        self.concerts_list = concerts_operations.get_saved_concerts(self.concerts_file)
 
     def run_window(self):
-        random_concert_to_display = concerts_list_ops.get_random_concert_string(self.concerts_list)
+        random_concert_to_display = concerts_operations.get_random_concert_string(self.concerts_list)
         window = self.display_main_menu(random_concert_to_display)
         self.process_user_click(window)
 
@@ -51,19 +52,19 @@ class GUI:
                              title="Random Concert", line_width=100)
 
                 case "Concerts":
-                    all_concerts = concerts_list_ops.get_all_concerts(self.concerts_list)
+                    all_concerts = concerts_operations.get_all_concerts(self.concerts_list)
                     sg.popup("All concerts you have seen:", all_concerts, line_width=100)
 
                 case "Artists":
-                    all_artists = concerts_list_ops.get_all_items("artists", self.concerts_list)
+                    all_artists = concerts_operations.get_all_items("artists", self.concerts_list)
                     sg.popup("Number of concerts you have been to with each artist:", all_artists, line_width=100)
 
                 case "Venues":
-                    all_venues = concerts_list_ops.get_all_items("venues", self.concerts_list)
+                    all_venues = concerts_operations.get_all_items("venues", self.concerts_list)
                     sg.popup("Number of concerts you have been to at each venue:", all_venues, line_width=100)
 
                 case "Persons":
-                    all_persons = concerts_list_ops.get_all_items("persons", self.concerts_list)
+                    all_persons = concerts_operations.get_all_items("persons", self.concerts_list)
                     sg.popup("Number of concerts you have been to together with each person:", all_persons,
                              line_width=100)
         window.close()
@@ -88,7 +89,8 @@ class GUI:
                     if values[0] and values[1] and values[2] and values[3]:
                         try:
                             parse(values[3]).strftime("%Y-%m-%d")
-                            return concerts_list_ops.add_concert(values, self.concerts_list)
+                            window.close()
+                            return concerts_operations.add_concert(values, self.concerts_list, self.concerts_file)
                         except AttributeError:
                             sg.popup("Incorrect date input", "Please enter date in another format")
 
@@ -119,13 +121,13 @@ class GUI:
                 case "OK":
                     search = list(window_values.keys())[list(window_values.values()).index(True)].lower()
                     found_concerts, search_string = \
-                        concerts_list_ops.get_search_result(search, window_values, self.concerts_list)
+                        concerts_operations.get_search_result(search, window_values, self.concerts_list)
 
                 case "Search by date (new window)":
                     search = "date"
                     values = self.display_date_search_menu()
                     found_concerts, search_string, two_dates = \
-                        concerts_list_ops.get_search_result_date(values, self.concerts_list)
+                        concerts_operations.get_search_result_date(values, self.concerts_list)
                     if two_dates:
                         search_string = values
 
@@ -263,11 +265,12 @@ class GUI:
             elif change_or_remove == "remove":
                 if self.display_is_sure(target_concert):
                     sg.popup("The chosen concert was removed.")
-                    self.concerts_list = concerts_list_ops.remove(target_concert, self.concerts_list)
+                    self.concerts_list = \
+                        concerts_operations.remove(target_concert, self.concerts_list, self.concerts_file)
 
     def display_change(self, concert):
         try:
-            persons_list = [person.first_name for person in concert.persons]
+            persons_list = [person for person in concert.persons]
         except TypeError:
             persons_list = []
         try:
@@ -275,7 +278,7 @@ class GUI:
         except AttributeError:
             note = ""
 
-        layout = [[sg.Text("Artist"), sg.Input(concert.artist.name)],
+        layout = [[sg.Text("Artist"), sg.Input(concert.artist)],
                   [sg.Text("Venue"), sg.Input(concert.venue.name)],
                   [sg.Text("City"), sg.Input(concert.venue.city)],
                   [sg.Text("Country"), sg.Input(concert.venue.country)],
@@ -294,7 +297,8 @@ class GUI:
 
                 case "OK":
                     window.close()
-                    changed_concert, self.concerts_list = concerts_list_ops.change(values, concert, self.concerts_list)
+                    changed_concert, self.concerts_list = \
+                        concerts_operations.change(values, concert, self.concerts_list, self.concerts_file)
                     sg.popup("The concert was altered with the new facts:", changed_concert.get_concert_long_string(),
                              line_width=100)
         window.close()
