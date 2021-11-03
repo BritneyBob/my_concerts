@@ -21,6 +21,14 @@ class Concert:
         self.note = Note(note) if note else ""
 
     def __eq__(self, other):
+        # a = self.artist == other.artist
+        # b = self.venue == other.venue
+        # c = self.date.strftime("%Y-%m-%d") == other.date.strftime("%Y-%m-%d")
+        # d = self.persons == other.persons
+        # e = self.note == other.note
+        # f = a and b and c and d and e
+        # return f
+
         return self.artist == other.artist and \
                self.venue == other.venue and \
                self.date.strftime("%Y-%m-%d") == other.date.strftime("%Y-%m-%d") and \

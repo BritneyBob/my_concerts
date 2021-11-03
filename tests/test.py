@@ -29,7 +29,7 @@ class TestConcertsOperations(unittest.TestCase):
         self.concerts = [
             Concert("Dipper", ("Musikens Hus", "Göteborg", "Sverige"), "12 okt 2001", ["Alex", "Erik"], ""),
             Concert("Nationalteatern", ("Liseberg", "Göteborg", "Sverige"), "13 jul 2005", [], ""),
-            Concert("Bob Dylan", ("Globen", "Stockholm", "Sverige"), "1 mar 2019", "", "Tråkig."),
+            Concert("Bob Dylan", ("Globen", "Stockholm", "Sverige"), "1 mar 2019", [], "Tråkig."),
             Concert("Britney Spears", ("Globen", "Stockholm", "Sverige"), "17 maj 2016", [], "Britney är ett proffs!"),
             Concert("Blur", ("Ullevi", "Göteborg", "Sverige"), "20 maj 1995", ["Tomten", "Jesus"], "Wohoo!"),
             Concert("The Beatles", ("Lisebergshallen", "Göteborg", "Sverige"), "3 feb 1964", ["Dalai Lama"], ""),
@@ -40,9 +40,6 @@ class TestConcertsOperations(unittest.TestCase):
         with open("concerts.bin", "wb") as concerts_file:
             pickle.dump(self.concerts, concerts_file)
         saved_concerts = concerts_operations.get_saved_concerts("concerts.bin")
-        # concert_strings = [concert.get_concert_long_string() for concert in self.concerts]
-        # saved_concert_strings = [concert.get_concert_long_string() for concert in
-        #                          concerts_operations.get_saved_concerts("concerts.bin")]
         self.assertEqual(self.concerts, saved_concerts)
 
     def test_get_concert_string_more_than_one_year_ago(self):
@@ -83,8 +80,8 @@ class TestConcertsOperations(unittest.TestCase):
         # self.assertEqual(concert.get_concert_long_string(), added_concert.get_concert_long_string())
         self.assertEqual(concert, added_concert)
 
-    def test_get_search_result(self):
-        pass
+    def test_get_search_result_artists(self):
+        found_concerts = concerts_operations.get_search_result("artists", "Beatles", self.concerts)
 
     def test_get_search_result_date(self):
         pass
