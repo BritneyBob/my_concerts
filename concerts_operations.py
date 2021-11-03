@@ -186,6 +186,6 @@ def get_all_items(items, concerts_list):
 
 def sort_ignore_case_and_the(frequency):
     artist = frequency[0]
-    if artist.lower().startswith("the"):
+    if artist.lower().startswith("the "):
         artist = artist[4:]
     return artist.lower()

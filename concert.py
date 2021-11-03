@@ -20,6 +20,13 @@ class Concert:
 
         self.note = Note(note) if note else ""
 
+    def __eq__(self, other):
+        return self.artist == other.artist and \
+               self.venue == other.venue and \
+               self.date.strftime("%Y-%m-%d") == other.date.strftime("%Y-%m-%d") and \
+               self.persons == other.persons and \
+               self.note == other.note
+
     def get_concert_long_string(self):
         concert_string = ""
         try:
