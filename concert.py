@@ -21,7 +21,7 @@ class Concert:
         self.note = Note(note) if note else ""
 
     def get_concert_long_string(self):
-        concert_string = ''
+        concert_string = ""
         try:
             date_artist_place_string = f"* {self.date.strftime('%Y-%m-%d')} you saw {self.artist} at " \
                                        f"{str(self.venue)}"

@@ -25,7 +25,7 @@ def get_saved_concerts(concerts_filename):
 def get_random_concert_string(concerts_list):
     concert_to_print = get_random_concert_same_month(concerts_list)
     years_since_concert = datetime.now().year - concert_to_print.date.year
-    remind_string = ''
+    remind_string = ""
 
     match years_since_concert:
         case 0:
@@ -72,7 +72,7 @@ def add_concert(values, concerts_list, concerts_filename):
     artist = values[0]
     venue = (values[1], values[2], country)
     date = values[3]
-    persons = values[4].split(', ') if values[4] != '' else []
+    persons = values[4].split(", ") if values[4] != "" else []
     note = values[5]
 
     new_concert = Concert(artist, venue, date, persons, note)

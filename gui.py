@@ -77,7 +77,7 @@ class GUI:
                   [sg.Text("Person/s you went with\n(optional)\n(separate with comma)"), sg.Multiline()],
                   [sg.Text("Note\n(optional)"), sg.Multiline()],
                   [sg.Button("OK"), sg.Button("Back")]]
-        window = sg.Window("Add concert", layout, element_justification='r', modal=True)
+        window = sg.Window("Add concert", layout, element_justification="r", modal=True)
 
         while True:
             event, values = window.read()
@@ -100,9 +100,9 @@ class GUI:
 
     def display_search_menu(self):
         layout = [[sg.Text("Search"), sg.Input()],
-                  [sg.Radio("Artist", 'RADIO1', default=True, key="ARTIST"),
-                   sg.Radio("Venue", 'RADIO1', key="VENUE"),
-                   sg.Radio("Person", 'RADIO1', key="PERSON"),
+                  [sg.Radio("Artist", "RADIO1", default=True, key="ARTIST"),
+                   sg.Radio("Venue", "RADIO1", key="VENUE"),
+                   sg.Radio("Person", "RADIO1", key="PERSON"),
                    sg.Button("Search by date (new window)")],
                   [sg.Stretch(), sg.Button("OK"), sg.Button("Back"), sg.Stretch()]]
 
@@ -179,9 +179,9 @@ class GUI:
                         sg.popup("Please enter one or two dates")
 
     def display_found(self, found_concerts):
-        print_concerts_string = ''
+        print_concerts_string = ""
         for concert in sorted(found_concerts, key=lambda c: c.date):
-            print_concerts_string += concert.get_concert_long_string() + '\n\n'
+            print_concerts_string += concert.get_concert_long_string() + "\n\n"
         layout = [[sg.Text(print_concerts_string)],
                   [sg.Button("Back"), sg.Stretch(), sg.Button("Change"), sg.Button("Remove")]]
 
@@ -200,7 +200,7 @@ class GUI:
 
     @classmethod
     def display_not_found(cls, sort_to_search, search_string):
-        no_memory_string = ''
+        no_memory_string = ""
         match sort_to_search:
             case "artist":
                 no_memory_string = f"Unfortunately you have no recollection of a concert with the artist " \
