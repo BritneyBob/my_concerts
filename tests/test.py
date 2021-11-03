@@ -4,6 +4,7 @@ import random
 import unittest
 
 from datetime import datetime, timedelta
+from dateparser import parse
 from dateutil.relativedelta import relativedelta
 
 
@@ -77,14 +78,61 @@ class TestConcertsOperations(unittest.TestCase):
         concert = Concert("Björk", ("Roskilde festival", "Roskilde", "Danmark"), "3 jul 2005", [], "")
         added_concert, _ = concerts_operations.add_concert(["Björk", "Roskilde festival", "Roskilde", "3 jul 2005", "",
                                                             ""], self.concerts, "concerts.bin")
-        # self.assertEqual(concert.get_concert_long_string(), added_concert.get_concert_long_string())
         self.assertEqual(concert, added_concert)
 
-    def test_get_search_result_artists(self):
-        found_concerts = concerts_operations.get_search_result("artists", "Beatles", self.concerts)
+    def test_get_search_result_artist_true(self):
+        found_concerts, _ = concerts_operations.get_search_result("artist", ["Beatles"], self.concerts)
+        expected_concerts = [self.concerts[5]]
+        self.assertEqual(expected_concerts, found_concerts)
 
-    def test_get_search_result_date(self):
-        pass
+    def test_get_search_result_artist_false(self):
+        found_concerts, _ = concerts_operations.get_search_result("artist", ["Toto"], self.concerts)
+        expected_concerts = []
+        self.assertEqual(expected_concerts, found_concerts)
+
+    def test_get_search_result_venue_true(self):
+        found_concerts, _ = concerts_operations.get_search_result("venue", ["Globen"], self.concerts)
+        expected_concerts = [self.concerts[2], self.concerts[3]]
+        self.assertEqual(expected_concerts, found_concerts)
+
+    def test_get_search_result_venue_false(self):
+        found_concerts, _ = concerts_operations.get_search_result("venue", ["Loppen"], self.concerts)
+        expected_concerts = []
+        self.assertEqual(expected_concerts, found_concerts)
+
+    def test_get_search_result_person_true(self):
+        found_concerts, _ = concerts_operations.get_search_result("person", ["Tomten"], self.concerts)
+        expected_concerts = [self.concerts[4], self.concerts[6]]
+        self.assertEqual(expected_concerts, found_concerts)
+
+    def test_get_search_result_person_false(self):
+        found_concerts, _ = concerts_operations.get_search_result("person", ["Knugen"], self.concerts)
+        expected_concerts = []
+        self.assertEqual(expected_concerts, found_concerts)
+
+    def test_get_search_result_date_true(self):
+        found_concerts, _, _ = concerts_operations.get_search_result_date(["17 maj 2016"], self.concerts)
+        expected_concerts = [self.concerts[3]]
+        self.assertEqual(expected_concerts, found_concerts)
+
+    def test_get_search_result_date_false(self):
+        found_concerts, _, _ = concerts_operations.get_search_result_date(["23 jul 1986"], self.concerts)
+        expected_concerts = []
+        self.assertEqual(expected_concerts, found_concerts)
+
+    def test_get_search_result_date_range_true(self):
+        date1 = parse("2016", settings={"PREFER_DAY_OF_MONTH": "first"})
+        date2 = parse("2020", settings={"PREFER_DAY_OF_MONTH": "last"})
+        found_concerts, _, _ = concerts_operations.get_search_result_date((date1, date2), self.concerts)
+        expected_concerts = [self.concerts[2]]
+        self.assertEqual(expected_concerts, found_concerts)
+
+    def test_get_search_result_date_range_false(self):
+        date1 = parse("1980", settings={"PREFER_DAY_OF_MONTH": "first"})
+        date2 = parse("1989", settings={"PREFER_DAY_OF_MONTH": "last"})
+        found_concerts, _, _ = concerts_operations.get_search_result_date((date1, date2), self.concerts)
+        expected_concerts = []
+        self.assertEqual(expected_concerts, found_concerts)
 
     def test_get_country_swedish(self):
         self.assertEqual("Sverige", concerts_operations.get_country("Göteborg"))
@@ -93,7 +141,11 @@ class TestConcertsOperations(unittest.TestCase):
         self.assertEqual("Sverige", concerts_operations.get_country("Gothenburg"))
 
     def test_change(self):
-        pass
+        changed_concert, self.concerts = \
+            concerts_operations.change(["The Beatles", "Cirkus", "Stockholm", "Sverige", "4 feb 1964",
+                                        "Dalai Lama, Mick Jagger", "Don't believe the hype"],
+                                       self.concerts[5], self.concerts, "concerts.bin")
+        self.assertEqual(self.concerts[-1], changed_concert)
 
     def test_remove_from_list(self):
         concert = self.concerts[random.randint(0, len(self.concerts))]

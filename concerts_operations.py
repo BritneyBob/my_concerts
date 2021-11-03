@@ -99,10 +99,13 @@ def get_search_result(search, values, concerts_list):
                     found_concerts.append(concert)
 
             case "person":
-                for saved_person in concert.persons:
-                    if fuzz.ratio(search_string.lower(), saved_person) > 90 or \
-                            fuzz.partial_ratio(search_string.lower(), saved_person.lower()) > 95:
-                        found_concerts.append(concert)
+                try:
+                    for saved_person in concert.persons:
+                        if fuzz.ratio(search_string.lower(), saved_person) > 90 or \
+                                fuzz.partial_ratio(search_string.lower(), saved_person.lower()) > 95:
+                            found_concerts.append(concert)
+                except TypeError:
+                    pass
 
     return found_concerts, search_string
 
