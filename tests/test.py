@@ -19,14 +19,13 @@ class TestGUI(unittest.TestCase):
         self.assertTrue(gui.concerts_list)
 
     def test_gui_without_concerts_file(self):
-        os.chdir(r"C:\Users\Britta\Desktop\YH\my_concerts\tests\without_concerts")
+        os.chdir(os.getcwd() + "\without_concerts")
         gui = GUI()
         self.assertFalse(gui.concerts_list)
 
 
 class TestConcertsOperations(unittest.TestCase):
     def setUp(self):
-        os.chdir(r"C:\Users\Britta\Desktop\YH\my_concerts\tests")
         self.concerts = [
             Concert("Dipper", ("Musikens Hus", "Göteborg", "Sverige"), "12 okt 2001", ["Alex", "Erik"], ""),
             Concert("Nationalteatern", ("Liseberg", "Göteborg", "Sverige"), "13 jul 2005", [], ""),
