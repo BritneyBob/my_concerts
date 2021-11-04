@@ -19,7 +19,7 @@ class TestGUI(unittest.TestCase):
         self.assertTrue(gui.concerts_list)
 
     def test_gui_without_concerts_file(self):
-        os.chdir(os.getcwd() + "\without_concerts")
+        os.chdir(os.getcwd() + "\\without_concerts")
         gui = GUI()
         self.assertFalse(gui.concerts_list)
 
@@ -58,6 +58,14 @@ class TestConcertsOperations(unittest.TestCase):
         gui_remind_string = concerts_operations.get_random_concert_string(concerts)
         self.assertEqual(gui_remind_string, remind_string)
 
+    def test_get_concert_string_this_year(self):
+        concerts = [Concert("Dipper", ("Musikens Hus", "Göteborg", "Sverige"), datetime.now().strftime("%Y-%m-%d"), [],
+                            "")]
+        remind_string = f"RECENTLY...\n* {datetime.now().strftime('%Y-%m-%d')} " \
+                        f"you saw Dipper at Musikens Hus in Göteborg, Sverige."
+        gui_remind_string = concerts_operations.get_random_concert_string(concerts)
+        self.assertEqual(gui_remind_string, remind_string)
+
     def test_get_concert_same_month(self):
         concerts_this_month = [Concert("Dipper", ("Musikens Hus", "Göteborg", "Sverige"),
                                        datetime.now().strftime("%Y-%m-%d"), [], "")]
@@ -78,6 +86,49 @@ class TestConcertsOperations(unittest.TestCase):
         added_concert, _ = concerts_operations.add_concert(["Björk", "Roskilde festival", "Roskilde", "3 jul 2005", "",
                                                             ""], self.concerts, "concerts.bin")
         self.assertEqual(concert, added_concert)
+
+    def test_add_concert_to_list(self):
+        _, concerts_list = concerts_operations.add_concert(["Björk", "Roskilde festival", "Roskilde", "3 jul 2005", "",
+                                                            ""], self.concerts, "concerts.bin")
+        self.assertEqual(self.concerts, concerts_list)
+
+    def test_add_concert_string(self):
+        added_concert, _ = concerts_operations.add_concert(["Björk", "Roskilde festival", "Roskilde", "3 jul 2005", "",
+                                                            ""], self.concerts, "concerts.bin")
+        expected_string = "* 2005-07-03 you saw Björk at Roskilde festival in Roskilde, Danmark."
+        self.assertEqual(expected_string, added_concert.get_concert_long_string())
+
+    def test_add_concert_string_two_persons(self):
+        added_concert, _ = concerts_operations.add_concert(["Björk", "Roskilde festival", "Roskilde", "3 jul 2005",
+                                                            "John F Kennedy, Mahatma Gandhi", ""],
+                                                           self.concerts, "concerts.bin")
+        expected_string = "* 2005-07-03 you saw Björk at Roskilde festival in Roskilde, Danmark.\n" \
+                          "  You were there with John F Kennedy and Mahatma Gandhi."
+        self.assertEqual(expected_string, added_concert.get_concert_long_string())
+
+    def test_add_concert_string_more_persons(self):
+        added_concert, _ = concerts_operations.add_concert(["Björk", "Roskilde festival", "Roskilde", "3 jul 2005",
+                                                            "John F Kennedy, Mahatma Gandhi, Snoop Dogg", ""],
+                                                           self.concerts, "concerts.bin")
+        expected_string = "* 2005-07-03 you saw Björk at Roskilde festival in Roskilde, Danmark.\n" \
+                          "  You were there with John F Kennedy, Mahatma Gandhi and Snoop Dogg."
+        self.assertEqual(expected_string, added_concert.get_concert_long_string())
+
+    def test_add_concert_string_one_person_note(self):
+        added_concert, _ = concerts_operations.add_concert(["Björk", "Roskilde festival", "Roskilde", "3 jul 2005",
+                                                            "John F Kennedy", "Amazing."],
+                                                           self.concerts, "concerts.bin")
+        expected_string = "* 2005-07-03 you saw Björk at Roskilde festival in Roskilde, Danmark.\n" \
+                          "  You were there with John F Kennedy.\n" \
+                          "  Notes: Amazing."
+        self.assertEqual(expected_string, added_concert.get_concert_long_string())
+
+    def test_add_concert_string_note(self):
+        added_concert, _ = concerts_operations.add_concert(["Björk", "Roskilde festival", "Roskilde", "3 jul 2005",
+                                                            "", "Amazing."], self.concerts, "concerts.bin")
+        expected_string = "* 2005-07-03 you saw Björk at Roskilde festival in Roskilde, Danmark.\n" \
+                          "  Notes: Amazing."
+        self.assertEqual(expected_string, added_concert.get_concert_long_string())
 
     def test_get_search_result_artist_true(self):
         found_concerts, _ = concerts_operations.get_search_result("artist", ["Beatles"], self.concerts)
@@ -145,6 +196,16 @@ class TestConcertsOperations(unittest.TestCase):
                                         "Dalai Lama, Mick Jagger", "Don't believe the hype"],
                                        self.concerts[5], self.concerts, "concerts.bin")
         self.assertEqual(self.concerts[-1], changed_concert)
+
+    def test_change_string(self):
+        changed_concert, self.concerts = \
+            concerts_operations.change(["The Beatles", "Cirkus", "Stockholm", "Sverige", "4 feb 1964",
+                                        "Dalai Lama, Mick Jagger", "Don't believe the hype"],
+                                       self.concerts[5], self.concerts, "concerts.bin")
+        expected_string = "* 1964-02-04 you saw The Beatles at Cirkus in Stockholm, Sverige.\n" \
+                          "  You were there with Dalai Lama and Mick Jagger.\n" \
+                          "  Notes: Don't believe the hype"
+        self.assertEqual(expected_string, self.concerts[-1].get_concert_long_string())
 
     def test_remove_from_list(self):
         concert = self.concerts[random.randint(0, len(self.concerts))]
