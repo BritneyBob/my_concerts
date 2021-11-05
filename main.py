@@ -3,7 +3,7 @@ from gui import GUI
 
 def main():
     gui = GUI()
-    gui.run()
+    gui.run_window()
 
 
 if __name__ == "__main__":
